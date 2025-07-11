@@ -12,6 +12,7 @@ const theatremanagement_1 = require("../controllers/setting/theatremanagement");
 const testscomponent_1 = require("../controllers/setting/testscomponent");
 const hmomanagement_1 = require("../controllers/setting/hmomanagement");
 const pricemodel_1 = require("../controllers/setting/pricemodel");
+const outreachmedication_1 = require("../controllers/setting/outreachmedication");
 const audit_1 = require("../controllers/audit/audit");
 //import {readicdten} from "../controllers/icdten/icdten";
 const router = express_1.default.Router();
@@ -55,4 +56,8 @@ router.get('/getpricingmodel', pricemodel_1.getpricingmodel);
 router.put('/updatepricingmodel/:id', pricemodel_1.updatepricingmodel);
 //audit
 router.get('/readallaudit', audit_1.readAllaudit);
+//outreachmedication
+router.post('/createoutreachmedication', outreachmedication_1.createoutreachmedications);
+router.get('/getalloutreachmedication', outreachmedication_1.getalloutreachmedications);
+router.put('/updateoutreachmedication/:id', outreachmedication_1.updateoutreachmedications);
 exports.default = router;

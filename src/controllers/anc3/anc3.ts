@@ -22,7 +22,6 @@ export const readAllancfollowupByAncv3 = async (req:any, res:any) => {
 export const createancfollowupsv3 = async (req:any, res:any) => {
     try {
       const {anc} = req.params;
-      console.log('anc', anc);
       const { firstName,lastName} = (req.user).user;
       req.body.staffname = `${firstName} ${lastName}`;    
       var {heightoffundus,presentationandposition,presentingpart,foetalheight,bp,hb,protein,glucose,weight,oedema,tetanustoxoid,sulfadoxinepyrimethamine,albendazole,remark,staffname} = req.body;
@@ -93,7 +92,10 @@ export const createancsv3 = async (req:any, res:any) => {
       const {postmedicalorsurgicalhistory,previouspregnancy,historyofpresentpregnancy} = req.body;
       const {lmp,edd,gravidity,breasts,height,cvs,rs,pelvis,abdomen} = req.body;      
        const pregnancysummary={lmp,edd,gravidity};
-       const generalexamination={breasts,height,cvs,rs,pelvis,abdomen}
+       const generalexamination={breasts,height,cvs,rs,pelvis,abdomen};
+       /////////// validation for anc followup /////////////////////////
+       var {heightoffundus,presentationandposition,presentingpart,foetalheight,bp,hb,protein,glucose,weight,oedema,tetanustoxoid,sulfadoxinepyrimethamine,albendazole,remark} = req.body;
+      validateinputfaulsyvalue({heightoffundus,presentationandposition,presentingpart,foetalheight,bp,hb,protein,glucose,weight,oedema,tetanustoxoid,sulfadoxinepyrimethamine,albendazole,remark,staffname});
    
       
        //frequency must inlcude
@@ -105,6 +107,10 @@ export const createancsv3 = async (req:any, res:any) => {
   
        }
     const queryresult=await createanc({patient:patientrecord._id,pregnancysummary,generalexamination,postmedicalorsurgicalhistory,previouspregnancy,historyofpresentpregnancy,staffname});
+    /////////////////////////////create first followup ////////////////////////////
+       //create first followup
+      await createancfollowup({anc:queryresult._id,heightoffundus,presentationandposition,presentingpart,foetalheight,bp,hb,protein,glucose,weight,oedema,tetanustoxoid,sulfadoxinepyrimethamine,albendazole,remark,staffname});
+    ///////////////////end first  follow up/////////////////////////////////
     res.status(200).json({queryresult, status: true});
     }
     catch(e:any){

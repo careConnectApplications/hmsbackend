@@ -84,6 +84,7 @@ const configuration = {
             }
             ;
             return ({
+                vaccinationlocation: ['fixed', 'outreach'],
                 pricingtype: ["Standard", "Age and Clinic Aware"],
                 tetanustoxoid: ["TT 1", "TT 2", "TT 3", "TT 4", "TT 5"],
                 sulfadoxinepyrimethamine: ["SP 1", "SP 3", "SP 3", "RVS"],
@@ -1034,7 +1035,7 @@ const configuration = {
         errorbase64: "Missing imageBase64",
         errorservicetray: "This service donot exist in your service tray"
     },
-    // environment: "test",
+    //environment: "test",
     environment: "prod",
 };
 exports.default = configuration;

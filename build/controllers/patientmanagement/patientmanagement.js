@@ -321,7 +321,7 @@ var createpatients = (req, res) => __awaiter(void 0, void 0, void 0, function* (
         let queryresult;
         let vitals = yield (0, vitalcharts_1.createvitalcharts)({ status: config_1.default.status[8] });
         if (isHMOCover == config_1.default.ishmo[1] || isHMOCover == true) {
-            queryappointmentresult = yield (0, appointment_1.createappointment)({ policecase, physicalassault, sexualassault, policaename, servicenumber, policephonenumber, division, appointmentid, patient: createpatientqueryresult._id, clinic, reason, appointmentdate, appointmentcategory, appointmenttype, vitals: vitals._id });
+            queryappointmentresult = yield (0, appointment_1.createappointment)({ policecase, physicalassault, sexualassault, policaename, servicenumber, policephonenumber, division, appointmentid, patient: createpatientqueryresult._id, clinic, reason, appointmentdate, appointmentcategory, appointmenttype, vitals: vitals._id, firstName, lastName, MRN: createpatientqueryresult === null || createpatientqueryresult === void 0 ? void 0 : createpatientqueryresult.MRN, HMOId: createpatientqueryresult === null || createpatientqueryresult === void 0 ? void 0 : createpatientqueryresult.HMOId, HMOName: createpatientqueryresult === null || createpatientqueryresult === void 0 ? void 0 : createpatientqueryresult.HMOName });
             queryresult = yield (0, patientmanagement_1.updatepatient)(createpatientqueryresult._id, { $push: { appointment: queryappointmentresult._id } });
         }
         else {
@@ -330,7 +330,7 @@ var createpatients = (req, res) => __awaiter(void 0, void 0, void 0, function* (
             payment.push(createpaymentqueryresult._id);
             //payment.push(createappointmentpaymentqueryresult._id);
             //update createpatientquery
-            queryappointmentresult = yield (0, appointment_1.createappointment)({ policecase, physicalassault, sexualassault, policaename, servicenumber, policephonenumber, division, status: config_1.default.status[5], appointmentid, payment: createpaymentqueryresult._id, patient: createpatientqueryresult._id, clinic, reason, appointmentdate, appointmentcategory, appointmenttype, vitals: vitals._id });
+            queryappointmentresult = yield (0, appointment_1.createappointment)({ policecase, physicalassault, sexualassault, policaename, servicenumber, policephonenumber, division, status: config_1.default.status[5], appointmentid, payment: createpaymentqueryresult._id, patient: createpatientqueryresult._id, clinic, reason, appointmentdate, appointmentcategory, appointmenttype, vitals: vitals._id, MRN: createpatientqueryresult === null || createpatientqueryresult === void 0 ? void 0 : createpatientqueryresult.MRN, HMOId: createpatientqueryresult === null || createpatientqueryresult === void 0 ? void 0 : createpatientqueryresult.HMOId, HMOName: createpatientqueryresult === null || createpatientqueryresult === void 0 ? void 0 : createpatientqueryresult.HMOName });
             queryresult = yield (0, patientmanagement_1.updatepatient)(createpatientqueryresult._id, { payment, $push: { appointment: queryappointmentresult._id } });
         }
         res.status(200).json({ queryresult, status: true });

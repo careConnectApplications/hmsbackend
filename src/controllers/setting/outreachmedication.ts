@@ -50,6 +50,7 @@ export async function getalloutreachmedications(req:Request, res:any){
 //update updateoutreachmedication
 export async function updateoutreachmedications(req:any, res:any){
     try{
+      console.log("here");
     //get id
     const {id} = req.params;
     const {outreachmedicationname} = req.body;
@@ -57,7 +58,7 @@ export async function updateoutreachmedications(req:any, res:any){
     var queryresult:any = await updateoutreachmedication(id, {outreachmedicationname});
     const { firstName, lastName } = (req.user).user;
     var actor = `${firstName} ${lastName}`;    
-    await createaudit({action:"Updated Outreachmedication",actor,affectedentity:queryresult.wardname}); 
+    await createaudit({action:"Updated Outreachmedication",actor,affectedentity:queryresult.outreachmedicationname}); 
     res.status(200).json({
         queryresult,
         status:true
