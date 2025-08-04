@@ -8,20 +8,7 @@ export var createprices = async (req:any,res:any) =>{
    
     try{
     
-       var {servicecategory,amount,servicetype,isHMOCover} = req.body;
-      if(!isHMOCover){
-        isHMOCover =configuration.ishmo[0];
-      }
-
-       
-        //validate that category is in the list of accepted category
-        /*
-        if(!((configuration.settings.servicecategory).includes(servicecategory))){
-          throw new Error(configuration.error.errorservicecategory);
-
-        }
-          */
-
+       var {servicecategory,amount,servicetype} = req.body;
         //get token from header
        // var settings =await configuration.settings();
        const foundPricingmodel:any =  await readonepricemodel({pricingtype:configuration.pricingtype[1]});
@@ -32,7 +19,7 @@ export var createprices = async (req:any,res:any) =>{
        
         //validation
         validateinputfaulsyvalue({servicecategory,amount,servicetype});
-        const foundPrice =  await readoneprice({servicecategory,servicetype,isHMOCover});
+        const foundPrice =  await readoneprice({servicecategory,servicetype});
         //update servicetype for New Patient Registration
        
        
