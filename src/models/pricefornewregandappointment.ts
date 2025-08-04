@@ -40,6 +40,12 @@ const priceappointmentnewregistrationSchema = new Schema({
   {
     type: String
   },
+  percentageofhmocover:{
+       type: Number,
+       required: true,
+       default: 100
+
+  },
   
   qty:
   {
