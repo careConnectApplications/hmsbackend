@@ -320,7 +320,7 @@ export var createpatients = async (req:any,res:any) =>{
            payment.push(createpaymentqueryresult._id);
            //payment.push(createappointmentpaymentqueryresult._id);
            //update createpatientquery
-           queryappointmentresult = await createappointment({policecase,physicalassault,sexualassault,policaename,servicenumber,policephonenumber,division,status:configuration.status[5],appointmentid,payment:createpaymentqueryresult._id ,patient:createpatientqueryresult._id,clinic,reason, appointmentdate, appointmentcategory, appointmenttype,vitals:vitals._id,MRN:createpatientqueryresult?.MRN,HMOId:createpatientqueryresult?.HMOId,HMOName:createpatientqueryresult?.HMOName});
+           queryappointmentresult = await createappointment({firstName,lastName,policecase,physicalassault,sexualassault,policaename,servicenumber,policephonenumber,division,status:configuration.status[5],appointmentid,payment:createpaymentqueryresult._id ,patient:createpatientqueryresult._id,clinic,reason, appointmentdate, appointmentcategory, appointmenttype,vitals:vitals._id,MRN:createpatientqueryresult?.MRN,HMOId:createpatientqueryresult?.HMOId,HMOName:createpatientqueryresult?.HMOName});
            queryresult =await updatepatient(createpatientqueryresult._id,{payment,$push:{appointment:queryappointmentresult._id}});
           
 
