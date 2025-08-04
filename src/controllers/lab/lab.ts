@@ -377,13 +377,14 @@ else{
   paymentreference = testid;
   //status=configuration.status[2];
 }
-  if(option == true && patient.isHMOCover == configuration.ishmo[0]){
+  if(option == true && amount > 0){
     var createpaymentqueryresult =await createpayment({firstName:patient?.firstName,lastName:patient?.lastName,MRN:patient?.MRN,phoneNumber:patient?.phoneNumber,paymentreference,paymentype:testname,paymentcategory:configuration.category[2],patient:patient._id,amount});
     queryresult= await updatelab({_id:id},{status:configuration.status[2],payment:createpaymentqueryresult._id,remark});
     await updatepatient(patient._id,{$push: {payment:createpaymentqueryresult._id}});
     
   }
-  else if(option == true && patient.isHMOCover == configuration.ishmo[1]){
+   
+  else if(option == true  && amount==0){
     queryresult= await updatelab({_id:id},{status:configuration.status[5],remark});
 
   }

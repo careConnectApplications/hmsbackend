@@ -844,9 +844,9 @@ const {servicetypedetails} = await readallservicetype({category: configuration.c
     for(var i =0; i < testname.length; i++){
   //    console.log(testname[i]);
   //console.log(isHMOCover);
-      var testPrice:any = await readoneprice({servicetype:testname[i],isHMOCover:configuration.ishmo[0]});
+      var testPrice:any = await readoneprice({servicetype:testname[i]});
       console.log("oks");
-      if((foundPatient?.isHMOCover ==  configuration.ishmo[0] || (appointment.patient).isHMOCover ==  configuration.ishmo[0]) && !testPrice){
+      if(!testPrice){
         throw new Error(`${configuration.error.errornopriceset}  ${testname[i]}`);
     }
     //var setting  = await configuration.settings();
@@ -864,8 +864,8 @@ const {servicetypedetails} = await readallservicetype({category: configuration.c
     testrecord = await createlab({testname:testname[i],patient:appointment.patient,appointment:appointment._id,appointmentid:appointment.appointmentid,testid,department,amount:Number(testPrice.amount)}); 
   }
    else{
-    testrecord = await createlab({testname:testname[i],patient:appointment.patient,appointment:appointment._id,appointmentid:appointment.appointmentid,testid,department}); 
-
+    
+         testrecord = await createlab({testname:testname[i],patient:appointment.patient,appointment:appointment._id,appointmentid:appointment.appointmentid,testid,department,amount:((100 - Number(testPrice.percentageofhmocover))/100) * Number(testPrice.amount)}); 
    }
    
     testsid.push(testrecord._id);
