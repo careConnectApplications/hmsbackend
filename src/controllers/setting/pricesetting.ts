@@ -1,6 +1,6 @@
 import configuration from "../../config";
 import  {readallprices,createprice,updateprice,readoneprice}  from "../../dao/price";
-import { validateinputfaulsyvalue} from "../../utils/otherservices";
+import { validateinputfaulsyvalue,validateinputfornumber} from "../../utils/otherservices";
 import {createaudit} from "../../dao/audit";
 import {readonepricemodel} from "../../dao/pricingmodel";
 //add patiient
@@ -8,7 +8,7 @@ export var createprices = async (req:any,res:any) =>{
    
     try{
     
-       var {servicecategory,amount,servicetype} = req.body;
+       var {servicecategory,amount,servicetype,percentageofhmocover} = req.body;
         //get token from header
        // var settings =await configuration.settings();
        const foundPricingmodel:any =  await readonepricemodel({pricingtype:configuration.pricingtype[1]});
@@ -19,6 +19,12 @@ export var createprices = async (req:any,res:any) =>{
        
         //validation
         validateinputfaulsyvalue({servicecategory,amount,servicetype});
+        //validate percentageofhmocover
+        if(percentageofhmocover && (percentageofhmocover > 100 || percentageofhmocover < 0)){
+          throw new Error("Percent Covered can only be between 0 and 100");
+
+        }
+         validateinputfornumber({percentageofhmocover});
         const foundPrice =  await readoneprice({servicecategory,servicetype});
         //update servicetype for New Patient Registration
        
