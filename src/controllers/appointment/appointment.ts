@@ -234,8 +234,10 @@ export const getAllPreviousClininicalEncounter = async (req:any, res:any) => {
     const {id} = req.params;
     //const {clinic} = (req.user).user;
     //console.log(clinic);
-    const queryresult = await readallappointment({$or:[{status:configuration.status[6]},{status:configuration.status[9]}],patient:id,fromclinicalencounter:true},{},'patient','doctor','payment','lab','radiology','procedure','prescription','admission','vitals');
-    res.status(200).json({
+   // const queryresult = await readallappointment({$or:[{status:configuration.status[6]},{status:configuration.status[9]}],patient:id,fromclinicalencounter:true},{},'patient','doctor','payment','lab','radiology','procedure','prescription','admission','vitals');
+    const queryresult = await readallappointment({patient:id},{},'patient','doctor','payment','lab','radiology','procedure','prescription','admission','vitals');
+ 
+   res.status(200).json({
       queryresult,
       status:true
     }); 
@@ -792,8 +794,6 @@ export var laborder= async (req:any, res:any) =>{
     
     //accept _id from request.
     const {id} = req.params;
-    console.log('////lab order request body////',req.body);
-    console.log('////lab order request params////',id);
     const {testname,appointmentunderscoreid,department} = req.body;
     var testid:any=String(Date.now());
     var testsid =[];
@@ -839,7 +839,7 @@ export var laborder= async (req:any, res:any) =>{
 
   //console.log(testname);
 
-const {servicetypedetails} = await readallservicetype({category: configuration.category[2]},{type:1,category:1,department:1,_id:0});
+//const {servicetypedetails} = await readallservicetype({category: configuration.category[2]},{type:1,category:1,department:1,_id:0});
     //loop through all test and create record in lab order
     for(var i =0; i < testname.length; i++){
   //    console.log(testname[i]);
