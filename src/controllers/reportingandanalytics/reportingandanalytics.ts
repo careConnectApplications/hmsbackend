@@ -36,7 +36,7 @@ const reportbyfinancialreport = [
     },
   },
     {   
-            $match:{$and:[{paymentcategory: querygroup}, {createdAt:{ $gt: startdate, $lt: enddate }}]}   
+            $match:{$and:[{paymentcategory: querygroup}, {updatedAt:{ $gt: startdate, $lt: enddate }}]}   
     }
     
 ];
@@ -460,11 +460,9 @@ export const reportsummary = async (req:any,res:any) =>{
     
     let {summary}:any = await settings();
     const financialaggregatepaid = [
-      {   
-      
-        $match:{$and:[{status:configuration.status[3]} , {createdAt:{ $gt: startdate, $lt: enddate }}]}   
-
-},
+      {         
+        $match:{$and:[{status:configuration.status[3]} , {updatedAt:{ $gt: startdate, $lt: enddate }}]}   
+      },
       {
         $group: {
           _id: "$paymentcategory",                // Group by product
@@ -486,9 +484,8 @@ export const reportsummary = async (req:any,res:any) =>{
     const financialaggregategrandtotalpaid = [
       {   
       
-        $match:{$and:[{status:configuration.status[3]} , {createdAt:{ $gt: startdate, $lt: enddate }}]}   
-
-},
+        $match:{$and:[{status:configuration.status[3]} , {updatedAt:{ $gt: startdate, $lt: enddate }}]}   
+      },
       {
         $group: {
           _id: null,                // Group by product
@@ -508,7 +505,7 @@ export const reportsummary = async (req:any,res:any) =>{
     const financialaggregatependingpaid = [
       {   
       
-        $match:{$and:[{status:configuration.status[2]} , {createdAt:{ $gt: startdate, $lt: enddate }}]}   
+        $match:{$and:[{status:configuration.status[2]} , {updatedAt:{ $gt: startdate, $lt: enddate }}]}   
 
 },
       {
@@ -532,7 +529,7 @@ export const reportsummary = async (req:any,res:any) =>{
     const cashieraggregatepaid = [
       {   
       
-        $match:{$and:[{status:configuration.status[3]} , {createdAt:{ $gt: startdate, $lt: enddate }}]}   
+        $match:{$and:[{status:configuration.status[3]} , {updatedAt:{ $gt: startdate, $lt: enddate }}]}   
 
 },
 /*
@@ -591,9 +588,9 @@ export const reportsummary = async (req:any,res:any) =>{
     const cashieraggregatepaidgrandtotal = [
       {   
       
-        $match:{$and:[{status:configuration.status[3]} , {createdAt:{ $gt: startdate, $lt: enddate }}]}   
+        $match:{$and:[{status:configuration.status[3]} , {updatedAt:{ $gt: startdate, $lt: enddate }}]}   
 
-},
+      },
       {
         $group: {
           _id: null,                // Group by product
