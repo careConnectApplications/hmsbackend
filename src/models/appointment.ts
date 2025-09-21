@@ -569,7 +569,7 @@ const appointmentSchema = new Schema({
     clinicalencounter:{
      
       diagnosisnote:[],
-      diagnosisicd10: String,
+      diagnosisicd10: [],
       assessmentnote:[],
       clinicalnote:[],
       plannote:[],
