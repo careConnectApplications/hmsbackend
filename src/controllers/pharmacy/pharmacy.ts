@@ -16,7 +16,7 @@ export var pharmacyorder= async (req:any, res:any) =>{
       const { firstName,lastName} = (req.user).user;
       //accept _id from request
       const {id} = req.params;
-      var {products, appointmentid} = req.body;
+      var {products, appointmentid,doctorsnote} = req.body;
       var orderid:any=String(Date.now());
       var pharcyorderid =[];
         validateinputfaulsyvalue({id, products});
@@ -50,7 +50,7 @@ export var pharmacyorder= async (req:any, res:any) =>{
       //loop through all test and create record in lab order
       for(var i =0; i < products.length; i++){
         let {dosageform,strength,dosage,frequency,route,drug,pharmacy,prescriptionnote,duration} = products[i];
-      var prescriptionrecord:any = await createprescription({isHMOCover:patient?.isHMOCover,HMOPlan:patient?.HMOPlan,HMOName:patient?.HMOName,HMOId:patient?.HMOId,firstName:patient?.firstName,lastName:patient?.lastName,MRN:patient?.MRN,pharmacy,duration,dosageform,strength,dosage,frequency,route, prescription:drug,patient:patient._id,orderid,prescribersname:firstName + " " + lastName,prescriptionnote,appointment:appointment._id,appointmentid:appointment.appointmentid,appointmentdate:appointment?.appointmentdate,clinic:appointment?.clinic});
+      var prescriptionrecord:any = await createprescription({doctorsnote,isHMOCover:patient?.isHMOCover,HMOPlan:patient?.HMOPlan,HMOName:patient?.HMOName,HMOId:patient?.HMOId,firstName:patient?.firstName,lastName:patient?.lastName,MRN:patient?.MRN,pharmacy,duration,dosageform,strength,dosage,frequency,route, prescription:drug,patient:patient._id,orderid,prescribersname:firstName + " " + lastName,prescriptionnote,appointment:appointment._id,appointmentid:appointment.appointmentid,appointmentdate:appointment?.appointmentdate,clinic:appointment?.clinic});
       pharcyorderid.push(prescriptionrecord ._id);
       //paymentids.push(createpaymentqueryresult._id);
       }
@@ -247,6 +247,7 @@ export var pharmacyorderwithoutconfirmation= async (req:any, res:any) =>{
           $group: {
             _id: "$orderid",
             orderid: {$first: "$orderid"},
+            doctorsnote:{$first: "$doctorsnote"},
             createdAt: { $first: "$createdAt" },
             updatedAt: { $first: "$updatedAt" },
             prescribersname: { $first: "$prescribersname" },
@@ -277,6 +278,7 @@ export var pharmacyorderwithoutconfirmation= async (req:any, res:any) =>{
             HMOId:1,
             HMOPlan:1,
             appointmentdate:1,
+            doctorsnote:1,
             clinic:1,
             appointmentid:1   
           }
@@ -393,6 +395,7 @@ export var pharmacyorderwithoutconfirmation= async (req:any, res:any) =>{
           $group: {
             _id: "$orderid",
             orderid: {$first: "$orderid"},
+            doctorsnote:{$first: "$doctorsnote"},
             createdAt: { $first: "$createdAt" },
             updatedAt: { $first: "$updatedAt" },
             prescribersname: { $first: "$prescribersname" },
@@ -420,6 +423,7 @@ export var pharmacyorderwithoutconfirmation= async (req:any, res:any) =>{
             firstName:1,
             lastName:1,
             MRN:1,
+            doctorsnote:1,
             isHMOCover:1,
             HMOName:1,
             HMOId:1,
