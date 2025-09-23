@@ -81,10 +81,7 @@ const prescriptionSchema = new Schema({
   {
     type: String
   },
-  doctorsnote:
-  {
-    type: String
-  },
+  doctorsnote:[],
   payment: {
       type: Schema.Types.ObjectId,
       ref: "Payment",
