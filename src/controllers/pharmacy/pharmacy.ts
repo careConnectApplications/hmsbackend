@@ -13,6 +13,7 @@ const { ObjectId } = mongoose.Types;
 //pharmacy order
 export var pharmacyorder= async (req:any, res:any) =>{
     try{
+      console.log("req.body",req.body);
       const { firstName,lastName} = (req.user).user;
       //accept _id from request
       const {id} = req.params;
