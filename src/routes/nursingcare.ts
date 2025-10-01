@@ -2,7 +2,7 @@ import express from 'express';
 import {protect} from "../utils/middleware";
 import {createvitalchart,readAllvitalsByPatient,readallvitalchartByAdmission,updatevitalchart} from '../controllers/vitalcharts/vitalcharts';
 import {createbloodmonitorings,readAllbloodmonitoringByPatient,readallbloodmonitoringByAdmission,updatebloodmonitorings} from '../controllers/bloodmonitoring/bloodmonitoringchart';
-import {createmedicationchart,readAllmedicationByPatient,readallmedicationchartByAdmission,updatemedicalchart} from '../controllers/medicationcharts/medicationcharts';
+import {createmedicationchartfornursingcare,createmedicationchart,readAllmedicationByPatient,readallmedicationchartByAdmission,updatemedicalchart} from '../controllers/medicationcharts/medicationcharts';
 import {createprogressreport,readAllprogressreportByPatient,readallprogressreportByAdmission,updateprogressreport} from '../controllers/progressreport/progressreport';
 import {createinsulin,readAllinsulinByPatient,readallinsulinByAdmission,updateinsulin} from '../controllers/insulin/insulin';
 import {createtubefeedingchart,readAlltubefeedingchartByPatient,readalltubefeedingchartByAdmission,updatetubefeedingchart} from '../controllers/tubefeedingchart/tubefeedingchart';
@@ -19,6 +19,7 @@ router.put('/updatevitalchart/:id', updatevitalchart);
 
 //medical charts
 router.post('/createmedicationchart/:id', createmedicationchart);
+router.post('/createmedicationchartfornursingcare/:id', createmedicationchartfornursingcare);
 router.get('/readallmedicationchartByAdmission/:admission', readallmedicationchartByAdmission);
 router.get('/readAllmedicationchartsByPatient/:patient', readAllmedicationByPatient);
 router.put('/updatemedicalchart/:id', updatemedicalchart);
