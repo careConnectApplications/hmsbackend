@@ -1,5 +1,5 @@
 import {readallmedicationcharts, createmedicationcharts,updatemedicationcharts} from "../../dao/medicationcharts";
-import { updateprescription } from "../../dao/prescription";
+import { updateprescription, readoneprescription } from "../../dao/prescription";
 import {readoneadmission} from "../../dao/admissions";
 import  {readonepatient}  from "../../dao/patientmanagement";
 import {validateinputfaulsyvalue} from "../../utils/otherservices";
@@ -36,6 +36,71 @@ export const readallmedicationchartByAdmission = async (req:any, res:any) => {
       res.status(403).json({ status: false, msg: error.message });
     }
   };
+export const createmedicationchartfornursingcare = async (req:any, res:any) => {
+    try {
+        
+       // admission,patient,height,weight,temperature,heartrate,bloodpressuresystolic,bloodpressurediastolic,respiration,saturation,bmi,painscore,rbs,gcs,wardname,staffname,
+      
+     
+      const {id} = req.params;
+      const { firstName,lastName} = (req.user).user;
+      const staffname = `${firstName} ${lastName}`;
+      
+      // Get prescription ID from req.body
+      const { prescription } = req.body;
+      
+      if(!prescription){
+        throw new Error("Prescription ID is required");
+      }
+      
+      // Read prescription record to extract medication details
+      const prescriptionRecord:any = await readoneprescription({_id:prescription},{},'','','');
+      
+      if(!prescriptionRecord){
+        throw new Error("Prescription not found");
+      }
+      
+      // Extract medication fields from prescription
+      const drug = prescriptionRecord.prescription || "";
+      const note = prescriptionRecord.prescriptionnote || prescriptionRecord.doctorsnote?.join("; ") || "";
+      const dose = prescriptionRecord.dosage || "";
+      const frequency = prescriptionRecord.frequency || "";
+      const route = prescriptionRecord.route || "";
+      
+      // Validate extracted fields
+       //frequency must inlcude
+       //route must contain allowed options
+        const foundPatient:any =  await readonepatient({_id:id},{},'','');
+       var admissionrecord:any;
+       if(foundPatient){
+         admissionrecord={
+           patient:id,
+           referedward:new ObjectId(),
+           _id:new ObjectId(),
+           
+         }
+       }
+       else{
+        admissionrecord=  await readoneadmission({_id:id},{},'');       
+          if(!admissionrecord){
+           throw new Error(`Admission donot ${configuration.error.erroralreadyexit}`);
+  
+          }
+
+       }
+      
+    const queryresult=await createmedicationcharts({referedward:admissionrecord.referedward,prescription,admission:admissionrecord._id,patient:admissionrecord.patient,drug,note,dose,frequency,route,staffname});
+     //find prescription and change status
+     await updateprescription(prescription,{servedstatus:configuration.servedstatus[0]});
+     //configuration.servedstatus[]
+
+    res.status(200).json({queryresult, status: true});
+    }
+    catch(e:any){
+        res.status(403).json({status: false, msg:e.message});
+
+    }
+}
 
   //create vital charts
   // Create a new schedule
@@ -108,7 +173,3 @@ export async function updatemedicalchart(req:any, res:any){
     }
 
   }
-
-  
-      
-  
