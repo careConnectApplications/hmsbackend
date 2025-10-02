@@ -12,7 +12,7 @@ import configuration from "../../config";
 export const readallmedicationchartByAdmission = async (req:any, res:any) => {
     try {
      const {admission} = req.params;
-      const queryresult = await readallmedicationcharts({admission},{},'prescription','');
+     const queryresult = await readallmedicationcharts({$or:[{admission:admission},{patient:admission}]},{},'prescription','');
       res.status(200).json({
         queryresult,
         status:true
