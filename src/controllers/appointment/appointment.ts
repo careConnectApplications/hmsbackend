@@ -932,7 +932,6 @@ export async function addclinicalencounter(req:any, res:any){
   if(height || weight ){
   var bmi = weight/((height/100) * (height/100));
   await updatevitalcharts((queryresult.vitals)[0], {bmi,height,weight,temperature,heartrate,bloodpressuresystolic,bloodpressurediastolic,respiration,saturation,staffname,status:configuration.status[6]})  
- 
 }  
  
  

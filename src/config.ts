@@ -143,7 +143,7 @@ for(var i =0; i < servicetypedetail.length ; i++){
         cptcodes:["Anesthesia for Procedure ans Services on the head","Anesthesia for Procedure ans Services on the neck"],
         dxcodes:["other amebic genitourinary infections","Other amebic infections"],
         priority:["Urgent", "Routine","Non-Urgent"],
-        presentingcomplaints:["Ankle/Foot Symptom Or C/O Lower Limb Symptom","Anosmia","Black Faeces Or C/O Melaena","A Back Symptom","A Head Symptom"],
+        presentingcomplaints:["Ankle/Foot Symptom Or C/O Lower Limb Symptom","Anosmia","Black Faeces Or C/O Melaena","A Back Symptom","A Head Symptom","Others"],
         diagnosis:["A04.9 Bacterial intestinal infection, unspecified","A05 Other bacterial foodborne intoxications, not elsewhere classified","A05.1 Botulism food poisoning"],
         voluntorysterilization:["Male","Female"],
         typeofiud:["Hormonal", "Copper"],
@@ -1106,7 +1106,7 @@ allowedfilesize: 20000,
     errorservicetray: "This service donot exist in your service tray"
 
   },
-    //environment: "test",
+ //   environment: "test",
 
  environment: "prod",
 

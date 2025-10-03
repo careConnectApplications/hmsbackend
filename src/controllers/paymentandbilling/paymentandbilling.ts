@@ -542,3 +542,5 @@ export async function printreceipt(req:any, res:any){
 }
 
 }
+
+
