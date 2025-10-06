@@ -529,7 +529,7 @@ const appointmentSchema = new mongoose_1.Schema({
     },
     clinicalencounter: {
         diagnosisnote: [],
-        diagnosisicd10: String,
+        diagnosisicd10: [],
         assessmentnote: [],
         clinicalnote: [],
         plannote: [],

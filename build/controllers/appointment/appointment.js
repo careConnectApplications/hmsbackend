@@ -21,7 +21,6 @@ const admissions_1 = require("../../dao/admissions");
 const vitalcharts_1 = require("../../dao/vitalcharts");
 const vitalcharts_2 = require("../../dao/vitalcharts");
 const patientmanagement_1 = require("../../dao/patientmanagement");
-const servicetype_1 = require("../../dao/servicetype");
 const users_1 = require("../../dao/users");
 const price_1 = require("../../dao/price");
 const payment_1 = require("../../dao/payment");
@@ -231,7 +230,8 @@ const getAllPreviousClininicalEncounter = (req, res) => __awaiter(void 0, void 0
         const { id } = req.params;
         //const {clinic} = (req.user).user;
         //console.log(clinic);
-        const queryresult = yield (0, appointment_1.readallappointment)({ $or: [{ status: config_1.default.status[6] }, { status: config_1.default.status[9] }], patient: id, fromclinicalencounter: true }, {}, 'patient', 'doctor', 'payment', 'lab', 'radiology', 'procedure', 'prescription', 'admission', 'vitals');
+        // const queryresult = await readallappointment({$or:[{status:configuration.status[6]},{status:configuration.status[9]}],patient:id,fromclinicalencounter:true},{},'patient','doctor','payment','lab','radiology','procedure','prescription','admission','vitals');
+        const queryresult = yield (0, appointment_1.readallappointment)({ patient: id }, {}, 'patient', 'doctor', 'payment', 'lab', 'radiology', 'procedure', 'prescription', 'admission', 'vitals');
         res.status(200).json({
             queryresult,
             status: true
@@ -761,8 +761,6 @@ var laborder = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         //accept _id from request.
         const { id } = req.params;
-        console.log('////lab order request body////', req.body);
-        console.log('////lab order request params////', id);
         const { testname, appointmentunderscoreid, department } = req.body;
         var testid = String(Date.now());
         var testsid = [];
@@ -796,14 +794,14 @@ var laborder = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             //  isHMOCover = appointment.patient.isHMOCover;
         }
         //console.log(testname);
-        const { servicetypedetails } = yield (0, servicetype_1.readallservicetype)({ category: config_1.default.category[2] }, { type: 1, category: 1, department: 1, _id: 0 });
+        //const {servicetypedetails} = await readallservicetype({category: configuration.category[2]},{type:1,category:1,department:1,_id:0});
         //loop through all test and create record in lab order
         for (var i = 0; i < testname.length; i++) {
             //    console.log(testname[i]);
             //console.log(isHMOCover);
-            var testPrice = yield (0, price_1.readoneprice)({ servicetype: testname[i], isHMOCover: config_1.default.ishmo[0] });
+            var testPrice = yield (0, price_1.readoneprice)({ servicetype: testname[i] });
             console.log("oks");
-            if (((foundPatient === null || foundPatient === void 0 ? void 0 : foundPatient.isHMOCover) == config_1.default.ishmo[0] || (appointment.patient).isHMOCover == config_1.default.ishmo[0]) && !testPrice) {
+            if (!testPrice) {
                 throw new Error(`${config_1.default.error.errornopriceset}  ${testname[i]}`);
             }
             //var setting  = await configuration.settings();
@@ -819,7 +817,7 @@ var laborder = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 testrecord = yield (0, lab_1.createlab)({ testname: testname[i], patient: appointment.patient, appointment: appointment._id, appointmentid: appointment.appointmentid, testid, department, amount: Number(testPrice.amount) });
             }
             else {
-                testrecord = yield (0, lab_1.createlab)({ testname: testname[i], patient: appointment.patient, appointment: appointment._id, appointmentid: appointment.appointmentid, testid, department });
+                testrecord = yield (0, lab_1.createlab)({ testname: testname[i], patient: appointment.patient, appointment: appointment._id, appointmentid: appointment.appointmentid, testid, department, amount: ((100 - Number(testPrice.percentageofhmocover)) / 100) * Number(testPrice.amount) });
             }
             testsid.push(testrecord._id);
             //paymentids.push(createpaymentqueryresult._id);

@@ -1106,9 +1106,10 @@ allowedfilesize: 20000,
     errorservicetray: "This service donot exist in your service tray"
 
   },
- //   environment: "test",
+  try:"ok",
+    environment: "test",
 
- environment: "prod",
+ //environment: "prod",
 
 }
 export default configuration;

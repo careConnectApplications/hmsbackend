@@ -61,6 +61,7 @@ function getalloutreachmedications(req, res) {
 function updateoutreachmedications(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
+            console.log("here");
             //get id
             const { id } = req.params;
             const { outreachmedicationname } = req.body;
@@ -68,7 +69,7 @@ function updateoutreachmedications(req, res) {
             var queryresult = yield (0, outreachmedication_1.updateoutreachmedication)(id, { outreachmedicationname });
             const { firstName, lastName } = (req.user).user;
             var actor = `${firstName} ${lastName}`;
-            yield (0, audit_1.createaudit)({ action: "Updated Outreachmedication", actor, affectedentity: queryresult.wardname });
+            yield (0, audit_1.createaudit)({ action: "Updated Outreachmedication", actor, affectedentity: queryresult.outreachmedicationname });
             res.status(200).json({
                 queryresult,
                 status: true
