@@ -39,7 +39,6 @@ exports.readAllancfollowupByAncv3 = readAllancfollowupByAncv3;
 const createancfollowupsv3 = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { anc } = req.params;
-        console.log('anc', anc);
         const { firstName, lastName } = (req.user).user;
         req.body.staffname = `${firstName} ${lastName}`;
         var { heightoffundus, presentationandposition, presentingpart, foetalheight, bp, hb, protein, glucose, weight, oedema, tetanustoxoid, sulfadoxinepyrimethamine, albendazole, remark, staffname } = req.body;
@@ -104,6 +103,9 @@ const createancsv3 = (req, res) => __awaiter(void 0, void 0, void 0, function* (
         const { lmp, edd, gravidity, breasts, height, cvs, rs, pelvis, abdomen } = req.body;
         const pregnancysummary = { lmp, edd, gravidity };
         const generalexamination = { breasts, height, cvs, rs, pelvis, abdomen };
+        /////////// validation for anc followup /////////////////////////
+        var { heightoffundus, presentationandposition, presentingpart, foetalheight, bp, hb, protein, glucose, weight, oedema, tetanustoxoid, sulfadoxinepyrimethamine, albendazole, remark } = req.body;
+        (0, otherservices_1.validateinputfaulsyvalue)({ heightoffundus, presentationandposition, presentingpart, foetalheight, bp, hb, protein, glucose, weight, oedema, tetanustoxoid, sulfadoxinepyrimethamine, albendazole, remark, staffname });
         //frequency must inlcude
         //route must contain allowed options
         const patientrecord = yield (0, patientmanagement_1.readonepatient)({ _id: id }, {}, '', '');
@@ -112,6 +114,10 @@ const createancsv3 = (req, res) => __awaiter(void 0, void 0, void 0, function* (
             throw new Error(`Patient donot ${config_1.default.error.erroralreadyexit}`);
         }
         const queryresult = yield (0, anc3_1.createanc)({ patient: patientrecord._id, pregnancysummary, generalexamination, postmedicalorsurgicalhistory, previouspregnancy, historyofpresentpregnancy, staffname });
+        /////////////////////////////create first followup ////////////////////////////
+        //create first followup
+        yield (0, ancfollowup3_1.createancfollowup)({ anc: queryresult._id, heightoffundus, presentationandposition, presentingpart, foetalheight, bp, hb, protein, glucose, weight, oedema, tetanustoxoid, sulfadoxinepyrimethamine, albendazole, remark, staffname });
+        ///////////////////end first  follow up/////////////////////////////////
         res.status(200).json({ queryresult, status: true });
     }
     catch (e) {

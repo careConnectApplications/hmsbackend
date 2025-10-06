@@ -1106,6 +1106,7 @@ allowedfilesize: 20000,
     errorservicetray: "This service donot exist in your service tray"
 
   },
+  try:"ok",
     environment: "test",
 
  //environment: "prod",

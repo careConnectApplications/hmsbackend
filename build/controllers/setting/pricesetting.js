@@ -27,17 +27,7 @@ const pricingmodel_1 = require("../../dao/pricingmodel");
 //add patiient
 var createprices = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        var { servicecategory, amount, servicetype, isHMOCover } = req.body;
-        if (!isHMOCover) {
-            isHMOCover = config_1.default.ishmo[0];
-        }
-        //validate that category is in the list of accepted category
-        /*
-        if(!((configuration.settings.servicecategory).includes(servicecategory))){
-          throw new Error(configuration.error.errorservicecategory);
-
-        }
-          */
+        var { servicecategory, amount, servicetype, percentageofhmocover } = req.body;
         //get token from header
         // var settings =await configuration.settings();
         const foundPricingmodel = yield (0, pricingmodel_1.readonepricemodel)({ pricingtype: config_1.default.pricingtype[1] });
@@ -46,7 +36,12 @@ var createprices = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
         }
         //validation
         (0, otherservices_1.validateinputfaulsyvalue)({ servicecategory, amount, servicetype });
-        const foundPrice = yield (0, price_1.readoneprice)({ servicecategory, servicetype, isHMOCover });
+        //validate percentageofhmocover
+        if (percentageofhmocover && (percentageofhmocover > 100 || percentageofhmocover < 0)) {
+            throw new Error("Percent Covered can only be between 0 and 100");
+        }
+        (0, otherservices_1.validateinputfornumber)({ percentageofhmocover });
+        const foundPrice = yield (0, price_1.readoneprice)({ servicecategory, servicetype });
         //update servicetype for New Patient Registration
         if (foundPrice) {
             throw new Error(`service category and type ${config_1.default.error.erroralreadyexit}`);

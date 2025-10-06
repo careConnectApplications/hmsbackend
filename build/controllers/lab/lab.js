@@ -352,12 +352,12 @@ const confirmlaborder = (req, res) => __awaiter(void 0, void 0, void 0, function
             paymentreference = testid;
             //status=configuration.status[2];
         }
-        if (option == true && patient.isHMOCover == config_1.default.ishmo[0]) {
+        if (option == true && amount > 0) {
             var createpaymentqueryresult = yield (0, payment_1.createpayment)({ firstName: patient === null || patient === void 0 ? void 0 : patient.firstName, lastName: patient === null || patient === void 0 ? void 0 : patient.lastName, MRN: patient === null || patient === void 0 ? void 0 : patient.MRN, phoneNumber: patient === null || patient === void 0 ? void 0 : patient.phoneNumber, paymentreference, paymentype: testname, paymentcategory: config_1.default.category[2], patient: patient._id, amount });
             queryresult = yield (0, lab_1.updatelab)({ _id: id }, { status: config_1.default.status[2], payment: createpaymentqueryresult._id, remark });
             yield (0, patientmanagement_1.updatepatient)(patient._id, { $push: { payment: createpaymentqueryresult._id } });
         }
-        else if (option == true && patient.isHMOCover == config_1.default.ishmo[1]) {
+        else if (option == true && amount == 0) {
             queryresult = yield (0, lab_1.updatelab)({ _id: id }, { status: config_1.default.status[5], remark });
         }
         else {

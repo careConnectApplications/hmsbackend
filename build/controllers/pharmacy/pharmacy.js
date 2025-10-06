@@ -30,25 +30,13 @@ const { ObjectId } = mongoose_1.default.Types;
 //pharmacy order
 var pharmacyorder = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        //add more options  dosageform,strength,dosage,frequency
-        //remove  payment from this 
-        //add qty to the data base
-        /*
-        
-        dosageform:String,
-          strength:String,
-          dosage:String,
-          frequency:String,
-          route:String,
-        */
+        console.log("req.body", req.body);
         const { firstName, lastName } = (req.user).user;
         //accept _id from request
         const { id } = req.params;
-        var { products, appointmentid } = req.body;
+        var { products, appointmentid, doctorsnote } = req.body;
         var orderid = String(Date.now());
         var pharcyorderid = [];
-        //var paymentids =[];
-        // validateinputfaulsyvalue({id, products,pharmacy});
         (0, otherservices_1.validateinputfaulsyvalue)({ id, products });
         //search patient
         var patient = yield (0, patientmanagement_1.readonepatient)({ _id: id, status: config_1.default.status[1] }, {}, '', '');
@@ -73,31 +61,7 @@ var pharmacyorder = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
         //loop through all test and create record in lab order
         for (var i = 0; i < products.length; i++) {
             let { dosageform, strength, dosage, frequency, route, drug, pharmacy, prescriptionnote, duration } = products[i];
-            //    console.log(testname[i]);
-            //var orderPrice:any = await readoneprice({servicetype:products[i], servicecategory: configuration.category[1],pharmacy});
-            /*
-            var orderPrice:any = await readoneprice({servicetype:drug, servicecategory: configuration.category[1],pharmacy});
-            
-            if(!orderPrice){
-              throw new Error(`${configuration.error.errornopriceset} ${products[i]}`);
-          }
-          if(orderPrice.qty <=0){
-            throw new Error(`${products[i]} ${configuration.error.erroravailability}`);
-    
-          }
-            */
-            /*
-            var amount =patient.isHMOCover == configuration.ishmo[1]?Number(orderPrice.amount) * configuration.hmodrugpayment:Number(orderPrice.amount);
-            var createpaymentqueryresult =await createpayment({paymentreference:orderid,paymentype:products[i],paymentcategory:configuration.category[1],patient:patient._id,amount});
-            */
-            //create 
-            // console.log("got here");
-            //var prescriptionrecord:any = await createprescription({pharmacy, prescription:products[i],patient:patient._id,payment:createpaymentqueryresult._id,orderid,prescribersname:firstName + " " + lastName,prescriptionnote,appointment:appointment._id,appointmentid:appointment.appointmentid});
-            /*
-            appointmentdate:Date,
-            clinic:String,
-            */
-            var prescriptionrecord = yield (0, prescription_1.createprescription)({ isHMOCover: patient === null || patient === void 0 ? void 0 : patient.isHMOCover, HMOPlan: patient === null || patient === void 0 ? void 0 : patient.HMOPlan, HMOName: patient === null || patient === void 0 ? void 0 : patient.HMOName, HMOId: patient === null || patient === void 0 ? void 0 : patient.HMOId, firstName: patient === null || patient === void 0 ? void 0 : patient.firstName, lastName: patient === null || patient === void 0 ? void 0 : patient.lastName, MRN: patient === null || patient === void 0 ? void 0 : patient.MRN, pharmacy, duration, dosageform, strength, dosage, frequency, route, prescription: drug, patient: patient._id, orderid, prescribersname: firstName + " " + lastName, prescriptionnote, appointment: appointment._id, appointmentid: appointment.appointmentid, appointmentdate: appointment === null || appointment === void 0 ? void 0 : appointment.appointmentdate, clinic: appointment === null || appointment === void 0 ? void 0 : appointment.clinic });
+            var prescriptionrecord = yield (0, prescription_1.createprescription)({ doctorsnote, isHMOCover: patient === null || patient === void 0 ? void 0 : patient.isHMOCover, HMOPlan: patient === null || patient === void 0 ? void 0 : patient.HMOPlan, HMOName: patient === null || patient === void 0 ? void 0 : patient.HMOName, HMOId: patient === null || patient === void 0 ? void 0 : patient.HMOId, firstName: patient === null || patient === void 0 ? void 0 : patient.firstName, lastName: patient === null || patient === void 0 ? void 0 : patient.lastName, MRN: patient === null || patient === void 0 ? void 0 : patient.MRN, pharmacy, duration, dosageform, strength, dosage, frequency, route, prescription: drug, patient: patient._id, orderid, prescribersname: firstName + " " + lastName, prescriptionnote, appointment: appointment._id, appointmentid: appointment.appointmentid, appointmentdate: appointment === null || appointment === void 0 ? void 0 : appointment.appointmentdate, clinic: appointment === null || appointment === void 0 ? void 0 : appointment.clinic });
             pharcyorderid.push(prescriptionrecord._id);
             //paymentids.push(createpaymentqueryresult._id);
         }
@@ -264,6 +228,7 @@ function groupreadallpharmacytransaction(req, res) {
                     $group: {
                         _id: "$orderid",
                         orderid: { $first: "$orderid" },
+                        doctorsnote: { $first: "$doctorsnote" },
                         createdAt: { $first: "$createdAt" },
                         updatedAt: { $first: "$updatedAt" },
                         prescribersname: { $first: "$prescribersname" },
@@ -294,6 +259,7 @@ function groupreadallpharmacytransaction(req, res) {
                         HMOId: 1,
                         HMOPlan: 1,
                         appointmentdate: 1,
+                        doctorsnote: 1,
                         clinic: 1,
                         appointmentid: 1
                     }
@@ -395,6 +361,7 @@ function groupreadallpharmacytransactionoptimized(req, res) {
                     $group: {
                         _id: "$orderid",
                         orderid: { $first: "$orderid" },
+                        doctorsnote: { $first: "$doctorsnote" },
                         createdAt: { $first: "$createdAt" },
                         updatedAt: { $first: "$updatedAt" },
                         prescribersname: { $first: "$prescribersname" },
@@ -420,6 +387,7 @@ function groupreadallpharmacytransactionoptimized(req, res) {
                         firstName: 1,
                         lastName: 1,
                         MRN: 1,
+                        doctorsnote: 1,
                         isHMOCover: 1,
                         HMOName: 1,
                         HMOId: 1,

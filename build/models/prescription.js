@@ -66,6 +66,7 @@ const prescriptionSchema = new mongoose_1.Schema({
     remark: {
         type: String
     },
+    doctorsnote: [],
     payment: {
         type: mongoose_1.Schema.Types.ObjectId,
         ref: "Payment",
