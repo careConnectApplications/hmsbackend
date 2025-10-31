@@ -548,7 +548,16 @@ export const getAllPaidSchedulesoptimized = async (req:any, res:any) => {
 */
 const aggregatequery = [
   // 1️⃣ Match by indexed fields first
-  { $match: { clinic, ...(status && { status }) } },
+  //{ $match: { clinic, ...(status && { status }) } },
+  {
+  $match: {
+    clinic,
+    ...(status && { status }),
+    createdAt: { 
+      $gte: new Date(new Date().setMonth(new Date().getMonth() - 2)) // last 2 months
+    }
+  }
+},
 
   // 2️⃣ Lookup patients (filtered inline)
   {
