@@ -44,7 +44,7 @@ const reports = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 },
             },
             {
-                $match: { $and: [{ paymentcategory: querygroup }, { createdAt: { $gt: startdate, $lt: enddate } }] }
+                $match: { $and: [{ paymentcategory: querygroup }, { updatedAt: { $gt: startdate, $lt: enddate } }] }
             }
         ];
         //admission
@@ -351,11 +351,11 @@ const cashierreport = (req, res) => __awaiter(void 0, void 0, void 0, function* 
             startdate = new Date(startdate);
             enddate = new Date(enddate);
         }
-        var query = { cashieremail: email, createdAt: { $gt: startdate, $lt: enddate } };
+        var query = { cashieremail: email, updatedAt: { $gt: startdate, $lt: enddate } };
         var populatequery = 'patient';
         const cashieraggregatependingpaid = [
             {
-                $match: { $and: [{ status: config_1.default.status[3] }, { cashieremail: email }, { createdAt: { $gt: startdate, $lt: enddate } }] }
+                $match: { $and: [{ status: config_1.default.status[3] }, { cashieremail: email }, { updatedAt: { $gt: startdate, $lt: enddate } }] }
             },
             {
                 $group: {
@@ -403,7 +403,7 @@ const reportsummary = (req, res) => __awaiter(void 0, void 0, void 0, function* 
         let { summary } = yield (0, settings_1.settings)();
         const financialaggregatepaid = [
             {
-                $match: { $and: [{ status: config_1.default.status[3] }, { createdAt: { $gt: startdate, $lt: enddate } }] }
+                $match: { $and: [{ status: config_1.default.status[3] }, { updatedAt: { $gt: startdate, $lt: enddate } }] }
             },
             {
                 $group: {
@@ -422,7 +422,7 @@ const reportsummary = (req, res) => __awaiter(void 0, void 0, void 0, function* 
         ];
         const financialaggregategrandtotalpaid = [
             {
-                $match: { $and: [{ status: config_1.default.status[3] }, { createdAt: { $gt: startdate, $lt: enddate } }] }
+                $match: { $and: [{ status: config_1.default.status[3] }, { updatedAt: { $gt: startdate, $lt: enddate } }] }
             },
             {
                 $group: {
@@ -439,7 +439,7 @@ const reportsummary = (req, res) => __awaiter(void 0, void 0, void 0, function* 
         ];
         const financialaggregatependingpaid = [
             {
-                $match: { $and: [{ status: config_1.default.status[2] }, { createdAt: { $gt: startdate, $lt: enddate } }] }
+                $match: { $and: [{ status: config_1.default.status[2] }, { updatedAt: { $gt: startdate, $lt: enddate } }] }
             },
             {
                 $group: {
@@ -458,7 +458,7 @@ const reportsummary = (req, res) => __awaiter(void 0, void 0, void 0, function* 
         ];
         const cashieraggregatepaid = [
             {
-                $match: { $and: [{ status: config_1.default.status[3] }, { createdAt: { $gt: startdate, $lt: enddate } }] }
+                $match: { $and: [{ status: config_1.default.status[3] }, { updatedAt: { $gt: startdate, $lt: enddate } }] }
             },
             /*
             {
@@ -511,7 +511,7 @@ const reportsummary = (req, res) => __awaiter(void 0, void 0, void 0, function* 
         ];
         const cashieraggregatepaidgrandtotal = [
             {
-                $match: { $and: [{ status: config_1.default.status[3] }, { createdAt: { $gt: startdate, $lt: enddate } }] }
+                $match: { $and: [{ status: config_1.default.status[3] }, { updatedAt: { $gt: startdate, $lt: enddate } }] }
             },
             {
                 $group: {

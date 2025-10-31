@@ -20,6 +20,7 @@ router.get('/readAllvitalsbypatient/:patient', vitalcharts_1.readAllvitalsByPati
 router.put('/updatevitalchart/:id', vitalcharts_1.updatevitalchart);
 //medical charts
 router.post('/createmedicationchart/:id', medicationcharts_1.createmedicationchart);
+router.post('/createmedicationchartfornursingcare/:id', medicationcharts_1.createmedicationchartfornursingcare);
 router.get('/readallmedicationchartByAdmission/:admission', medicationcharts_1.readallmedicationchartByAdmission);
 router.get('/readAllmedicationchartsByPatient/:patient', medicationcharts_1.readAllmedicationByPatient);
 router.put('/updatemedicalchart/:id', medicationcharts_1.updatemedicalchart);

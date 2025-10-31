@@ -31,6 +31,11 @@ const priceappointmentnewregistrationSchema = new mongoose_1.Schema({
     pharmacy: {
         type: String
     },
+    percentageofhmocover: {
+        type: Number,
+        required: true,
+        default: 100
+    },
     qty: {
         type: Number
     },
