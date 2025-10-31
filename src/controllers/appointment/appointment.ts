@@ -547,10 +547,10 @@ export const getAllPaidSchedulesoptimized = async (req:any, res:any) => {
 ];
 */
 const aggregatequery = [
-  // 1️⃣ Pre-filter by clinic & status (indexed fields)
+  // 1️⃣ Match by indexed fields first
   { $match: { clinic, ...(status && { status }) } },
 
-  // 2️⃣ Lookup patients with inline filtering
+  // 2️⃣ Lookup patients (filtered inline)
   {
     $lookup: {
       from: 'patientsmanagements',
@@ -572,7 +572,7 @@ const aggregatequery = [
   },
   { $unwind: '$patient' },
 
-  // 3️⃣ Payments lookup
+  // 3️⃣ Lookup payments
   {
     $lookup: {
       from: 'payments',
@@ -593,49 +593,50 @@ const aggregatequery = [
     }
   },
 
-  // 5️⃣ Vitals lookup
-  {
-    $lookup: {
-      from: 'vitalcharts',
-      localField: 'vitals',
-      foreignField: '_id',
-      as: 'vitals'
-    }
-  },
-  { $unwind: { path: '$vitals', preserveNullAndEmptyArrays: true } },
-
-  // 6️⃣ Projection (limit output size)
-  {
-    $project: {
-      _id: 1,
-      createdAt: 1,
-      reason: 1,
-      updatedAt: 1,
-      appointmenttype: 1,
-      appointmentdate: 1,
-      clinic: 1,
-      appointmentcategory: 1,
-      patient: 1,
-      vitals: 1,
-      vitalstatus: '$vitals.status',
-      status: 1,
-    }
-  },
-
-  // 7️⃣ Sort and paginate efficiently
+  // 5️⃣ Sort early for pagination efficiency
   { $sort: { createdAt: -1 } },
+
+  // 6️⃣ Use $facet for combined pagination and count
   {
     $facet: {
       paginatedResults: [
         { $skip: (page - 1) * size },
-        { $limit: size }
+        { $limit: size },
+
+        // 7️⃣ Lookup vitals only for the current page
+        {
+          $lookup: {
+            from: 'vitalcharts',
+            localField: 'vitals',
+            foreignField: '_id',
+            as: 'vitals'
+          }
+        },
+        { $unwind: { path: '$vitals', preserveNullAndEmptyArrays: true } },
+
+        // 8️⃣ Final projection
+        {
+          $project: {
+            _id: 1,
+            createdAt: 1,
+            reason: 1,
+            updatedAt: 1,
+            appointmenttype: 1,
+            appointmentdate: 1,
+            clinic: 1,
+            appointmentcategory: 1,
+            patient: 1,
+            vitals: 1,
+            vitalstatus: '$vitals.status',
+            status: 1,
+          }
+        }
       ],
-      totalCount: [
-        { $count: 'count' }
-      ]
+      totalCount: [{ $count: 'count' }]
     }
   }
 ];
+
 
 
     const queryresult = await optimizedreadallappointment(aggregatequery,page,size);

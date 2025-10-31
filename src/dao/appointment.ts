@@ -63,18 +63,28 @@ export async function optimizedreadallappointment(aggregatequery:any, page:any, 
   }
 }
   */
- export async function optimizedreadallappointment(aggregatequery:any, page:any, size:any) {
+ export async function optimizedreadallappointment(aggregatequery: any, page: number, size: number) {
   try {
+    // Allow MongoDB to use disk for large sorts/lookups
     const [result] = await Appointment.aggregate(aggregatequery).allowDiskUse(true);
-    const appointmentdetails = result.paginatedResults;
-    const totalappointmentdetails = result.totalCount[0]?.count || 0;
+
+    const appointmentdetails = result?.paginatedResults || [];
+    const totalappointmentdetails = result?.totalCount?.[0]?.count || 0;
     const totalPages = Math.ceil(totalappointmentdetails / size);
-    return { appointmentdetails, totalPages, totalappointmentdetails, size, page };
-  } catch (err) {
-    console.log(err);
+
+    return {
+      appointmentdetails,
+      totalPages,
+      totalappointmentdetails,
+      size,
+      page,
+    };
+  } catch (err: any) {
+    console.error(err);
     throw new Error(configuration.error.erroruserread);
   }
 }
+
 
 
 export async function readallappointmentfirstfive(query:any,selectquery:any,populatequery:any,populatesecondquery:any,populatethirdquery:any) {
