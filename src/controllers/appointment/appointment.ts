@@ -469,6 +469,7 @@ export const getAllPaidSchedulesoptimized = async (req:any, res:any) => {
   { $sort: { createdAt: -1 } },
   ]; 
     */
+   /*
    const aggregatequery = [
   { $match: { clinic, ...(status && { status }) } },
   {
@@ -544,6 +545,98 @@ export const getAllPaidSchedulesoptimized = async (req:any, res:any) => {
     }
   }
 ];
+*/
+const aggregatequery = [
+  // 1️⃣ Pre-filter by clinic & status (indexed fields)
+  { $match: { clinic, ...(status && { status }) } },
+
+  // 2️⃣ Lookup patients with inline filtering
+  {
+    $lookup: {
+      from: 'patientsmanagements',
+      let: { patientId: '$patient' },
+      pipeline: [
+        {
+          $match: {
+            $expr: { $eq: ['$_id', '$$patientId'] },
+            ...(firstName ? { firstName: new RegExp('^' + firstName, 'i') } : {}),
+            ...(lastName ? { lastName: new RegExp('^' + lastName, 'i') } : {}),
+            ...(MRN ? { MRN: new RegExp('^' + MRN, 'i') } : {}),
+            ...(HMOId ? { HMOId: new RegExp('^' + HMOId, 'i') } : {}),
+            ...(phoneNumber ? { phoneNumber: new RegExp('^' + phoneNumber, 'i') } : {}),
+          }
+        }
+      ],
+      as: 'patient'
+    }
+  },
+  { $unwind: '$patient' },
+
+  // 3️⃣ Payments lookup
+  {
+    $lookup: {
+      from: 'payments',
+      localField: 'payment',
+      foreignField: '_id',
+      as: 'payment'
+    }
+  },
+  { $unwind: { path: '$payment', preserveNullAndEmptyArrays: true } },
+
+  // 4️⃣ Filter by payment status or HMO coverage
+  {
+    $match: {
+      $or: [
+        { 'payment.status': configuration.status[3] },
+        { 'patient.isHMOCover': configuration.ishmo[1] }
+      ]
+    }
+  },
+
+  // 5️⃣ Vitals lookup
+  {
+    $lookup: {
+      from: 'vitalcharts',
+      localField: 'vitals',
+      foreignField: '_id',
+      as: 'vitals'
+    }
+  },
+  { $unwind: { path: '$vitals', preserveNullAndEmptyArrays: true } },
+
+  // 6️⃣ Projection (limit output size)
+  {
+    $project: {
+      _id: 1,
+      createdAt: 1,
+      reason: 1,
+      updatedAt: 1,
+      appointmenttype: 1,
+      appointmentdate: 1,
+      clinic: 1,
+      appointmentcategory: 1,
+      patient: 1,
+      vitals: 1,
+      vitalstatus: '$vitals.status',
+      status: 1,
+    }
+  },
+
+  // 7️⃣ Sort and paginate efficiently
+  { $sort: { createdAt: -1 } },
+  {
+    $facet: {
+      paginatedResults: [
+        { $skip: (page - 1) * size },
+        { $limit: size }
+      ],
+      totalCount: [
+        { $count: 'count' }
+      ]
+    }
+  }
+];
+
 
     const queryresult = await optimizedreadallappointment(aggregatequery,page,size);
     res.status(200).json({
