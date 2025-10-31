@@ -385,129 +385,17 @@ export const getAllPaidSchedules = async (req:any, res:any) => {
   }
 };
 export const getAllPaidSchedulesoptimized = async (req:any, res:any) => {
-  try {
-   
+  try {  
     //const {clinic} = (req.user).user;
     const {clinic} = req.params;
     var {status,firstName,MRN,HMOId,lastName,phoneNumber} = req.query;
     var page = parseInt(req.query.page) || 1;
     var size = parseInt(req.query.size) || 150;
     // var statusfilter:any =status?{status,clinic}:{clinic};
-    /*
-    var filter:any = {};
-        var statusfilter:any =status?{status,clinic}:{clinic};
-        // Add filters based on query parameters
-        if (firstName) {   
-          filter.firstName = new RegExp(firstName, 'i'); // Case-insensitive search for name
-        }
-        if(MRN) {
-          filter.MRN = new RegExp(MRN, 'i');
-        }
-        if (HMOId) {
-          filter.HMOId = new RegExp(HMOId, 'i'); // Case-insensitive search for email
-        }
-        if (lastName) {
-          filter.lastName = new RegExp(lastName, 'i'); // Case-insensitive search for email
-        }
-        if (phoneNumber) {
-          filter.phoneNumber = new RegExp(phoneNumber, 'i'); // Case-insensitive search for email
-        }
-      
-    */
     // const queryresult = await readallappointment({$or:[{status:configuration.status[5]},{status:configuration.status[6]},{status:configuration.status[9]}],clinic},{},'patient','doctor','payment');
-    let aggregatequery = 
+   /* let aggregatequery = 
     [ 
-      /*
-      {
-        $match:statusfilter
-       },
-      {
-      $lookup: {
-        from: 'payments',       
-        localField: 'payment',    
-        foreignField: '_id',     
-        as: 'payment'     
-      }
-    },
-    {
-      $lookup: {
-        from: 'patientsmanagements',        
-        localField: 'patient',    
-        foreignField: '_id',      
-        as: 'patient'      
-      }
-    },
-    {
-      $lookup: {
-        from: 'users',        
-        localField: 'doctor',    
-        foreignField: '_id',      
-        as: 'doctor'     
-      }
-    },
-    {
-      $lookup: {
-        from: 'vitalcharts',        
-        localField: 'vitals',    
-        foreignField: '_id',      
-        as: 'vitals'     
-      }
-    },
-    //vitals
-    {
-      $unwind:{ 
-        path:'$payment' , // Deconstruct the payment array (from the lookup)
-      preserveNullAndEmptyArrays: true
-      }
-    },
-    {
-      $unwind: {
-        path: '$patient',
-        preserveNullAndEmptyArrays: true
-
-      }  // Deconstruct the patient array (from the lookup)
-    },
-    {
-      $unwind: {
-        path: '$vitals',
-        preserveNullAndEmptyArrays: true
-
-      }  // Deconstruct the patient array (from the lookup)
-    },
    
-    {
-      $match: { $or:[{'payment.status': configuration.status[3]},{'patient.isHMOCover':configuration.ishmo[1]}] }  // Filter payment
-    },
-    {
-      $project:{
-        _id:1,
-        createdAt:1,
-        reason:1,
-        updatedAt:1,
-        appointmenttype:1,
-        appointmentdate:1,
-        clinic:1,
-        appointmentcategory:1,
-        firstName:"$patient.firstName",
-        lastName:"$patient.lastName",
-        phoneNumber:"$patient.phoneNumber",
-        MRN:"$patient.MRN",
-        patient:"$patient",
-        vitals:1,
-        HMOId:"$patient.HMOId",
-        HMOName:"$patient.HMOName",
-        vitalstatus:"$vitals.status",
-        status:1,
-        paymentstatus:"$payment.status",
-        paymentreference:"$payment.paymentreference",
-        doctorsfirstName:"$doctor.firstName",
-        doctorslastName:"$doctor.lastName"
-      }
-    },
-    {
-      $match:filter
-    },
-    */
    { $match: { clinic, ...(status && { status }) } },
 
  {
@@ -528,30 +416,6 @@ export const getAllPaidSchedulesoptimized = async (req:any, res:any) => {
     ...(phoneNumber ? { 'patient.phoneNumber': new RegExp(phoneNumber, 'i') } : {}),
   }
 },
-/*
-  {
-    $lookup: {
-      from: 'patientsmanagements',
-      let: { patientId: '$patient' },
-      pipeline: [
-        {
-          $match: {
-            $expr: { $eq: ['$_id', '$$patientId'] },
-            ...(firstName ? { firstName: new RegExp(firstName, 'i') } : {}),
-            ...(MRN ? { MRN: new RegExp(MRN, 'i') } : {}),
-            ...(HMOId ? { HMOId: new RegExp(HMOId, 'i') } : {}),
-            ...(lastName ? { lastName: new RegExp(lastName, 'i') } : {}),
-            ...(phoneNumber ? { phoneNumber: new RegExp(phoneNumber, 'i') } : {}),
-          }
-        }
-      ],
-      as: 'patient'
-    }
-  },
-  */
-  //{ $unwind: { path: '$patient', preserveNullAndEmptyArrays: false } },
-
-  // Repeat lookup structure for payments, doctor, vitals (but skip if not needed)
   {
     $lookup: {
       from: 'payments',
@@ -583,11 +447,8 @@ export const getAllPaidSchedulesoptimized = async (req:any, res:any) => {
         path: '$vitals',
         preserveNullAndEmptyArrays: true
 
-      }  // Deconstruct the patient array (from the lookup)
+      }  
     },
-
- 
-
   {
     $project: {
          _id:1,
@@ -602,23 +463,89 @@ export const getAllPaidSchedulesoptimized = async (req:any, res:any) => {
         patient:1,
         vitals:1,
         vitalstatus:"$vitals.status",
-        status:1,
-       
-      
-
-     
-        //doctorsfirstName:"$doctor.firstName",
-        //doctorslastName:"$doctor.lastName"
-        
+        status:1, 
     }
   },
   { $sort: { createdAt: -1 } },
   ]; 
+    */
+   const aggregatequery = [
+  { $match: { clinic, ...(status && { status }) } },
+  {
+    $lookup: {
+      from: 'patientsmanagements',
+      localField: 'patient',
+      foreignField: '_id',
+      as: 'patient'
+    }
+  },
+  { $unwind: '$patient' },
+  {
+    $match: {
+      ...(firstName ? { 'patient.firstName': new RegExp(firstName, 'i') } : {}),
+      ...(MRN ? { 'patient.MRN': new RegExp(MRN, 'i') } : {}),
+      ...(HMOId ? { 'patient.HMOId': new RegExp(HMOId, 'i') } : {}),
+      ...(lastName ? { 'patient.lastName': new RegExp(lastName, 'i') } : {}),
+      ...(phoneNumber ? { 'patient.phoneNumber': new RegExp(phoneNumber, 'i') } : {}),
+    }
+  },
+  {
+    $lookup: {
+      from: 'payments',
+      localField: 'payment',
+      foreignField: '_id',
+      as: 'payment'
+    }
+  },
+  { $unwind: { path: '$payment', preserveNullAndEmptyArrays: true } },
+  {
+    $match: {
+      $or: [
+        { 'payment.status': configuration.status[3] },
+        { 'patient.isHMOCover': configuration.ishmo[1] }
+      ]
+    }
+  },
+  {
+    $lookup: {
+      from: 'vitalcharts',
+      localField: 'vitals',
+      foreignField: '_id',
+      as: 'vitals'
+    }
+  },
+  { $unwind: { path: '$vitals', preserveNullAndEmptyArrays: true } },
+  {
+    $project: {
+      _id: 1,
+      createdAt: 1,
+      reason: 1,
+      updatedAt: 1,
+      appointmenttype: 1,
+      appointmentdate: 1,
+      clinic: 1,
+      appointmentcategory: 1,
+      patient: 1,
+      vitals: 1,
+      vitalstatus: '$vitals.status',
+      status: 1
+    }
+  },
+  { $sort: { createdAt: -1 } },
+  {
+    $facet: {
+      paginatedResults: [
+        { $skip: (page - 1) * size },
+        { $limit: size }
+      ],
+      totalCount: [
+        { $count: 'count' }
+      ]
+    }
+  }
+];
+
     const queryresult = await optimizedreadallappointment(aggregatequery,page,size);
-   
-    
-    //const queryresult = await readallappointment({clinic},{},'patient','doctor',{path:'payment', match: { status: { $eq: configuration.status[3] } },});
-    //'payment.status':configuration.status[3]
     res.status(200).json({
       queryresult,
       status:true

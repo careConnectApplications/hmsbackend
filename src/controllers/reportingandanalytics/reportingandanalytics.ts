@@ -396,12 +396,12 @@ if (!startdate || !enddate) {
 }
 
    
-    var query ={cashieremail:email,createdAt:{ $gt: startdate, $lt: enddate }};
+    var query ={cashieremail:email,updatedAt:{ $gt: startdate, $lt: enddate }};
       var populatequery ='patient';
       const cashieraggregatependingpaid = [
         {   
         
-          $match:{$and:[{status:configuration.status[3]},{cashieremail:email} , {createdAt:{ $gt: startdate, $lt: enddate }}]}   
+          $match:{$and:[{status:configuration.status[3]},{cashieremail:email} , {updatedAt:{ $gt: startdate, $lt: enddate }}]}   
   
   },
         {

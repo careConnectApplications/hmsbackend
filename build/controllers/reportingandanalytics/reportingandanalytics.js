@@ -351,11 +351,11 @@ const cashierreport = (req, res) => __awaiter(void 0, void 0, void 0, function* 
             startdate = new Date(startdate);
             enddate = new Date(enddate);
         }
-        var query = { cashieremail: email, createdAt: { $gt: startdate, $lt: enddate } };
+        var query = { cashieremail: email, updatedAt: { $gt: startdate, $lt: enddate } };
         var populatequery = 'patient';
         const cashieraggregatependingpaid = [
             {
-                $match: { $and: [{ status: config_1.default.status[3] }, { cashieremail: email }, { createdAt: { $gt: startdate, $lt: enddate } }] }
+                $match: { $and: [{ status: config_1.default.status[3] }, { cashieremail: email }, { updatedAt: { $gt: startdate, $lt: enddate } }] }
             },
             {
                 $group: {
