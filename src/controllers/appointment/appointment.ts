@@ -80,9 +80,9 @@ export const getAllSchedulesoptimized = async (req:any, res:any) => {
     const page = parseInt(req.query.page) || 1;
     const size = parseInt(req.query.size) || 150;
     let filter:any = {};
-    //var otherfilter:any = {};
-    //appointment, type, MRN,patient name, 
-     // Add filters based on query parameters
+    const twoMonthsAgo = new Date();
+    twoMonthsAgo.setMonth(twoMonthsAgo.getMonth() - 2);
+    filter.createdAt = { $gte: twoMonthsAgo };
      if (firstName) {
       //console.log(req.query.firstName)
       filter.firstName = new RegExp(firstName, 'i'); // Case-insensitive search for name
@@ -99,16 +99,6 @@ export const getAllSchedulesoptimized = async (req:any, res:any) => {
    if (appointmenttype) {
     filter.appointmenttype = new RegExp(appointmenttype, 'i'); // Case-insensitive search for email
   }
-  /*
-    if(status == "paid"){
-      otherfilter.status=configuration.status[3]
-   
-       }
-       else{
-        otherfilter.status=configuration.status[5];
-   
-       }
-        */ 
        const referencegroup = [
         //look up patient
         //add query
