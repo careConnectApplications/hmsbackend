@@ -1,13 +1,17 @@
 version: '3.4'
+
 services:
-  #mongo db services
+  # MongoDB service
   mongo_db:
     container_name: mongodb
     image: mongo:5.0
     restart: unless-stopped
     volumes:
       - newdb:/data/db
-  #hms services1
+    networks:
+      - hmsbackend_default
+
+  # HMS Service 1
   hmsservicesone:
     container_name: hmsservicesone
     restart: unless-stopped
@@ -15,18 +19,18 @@ services:
     ports:
       - 5003:5000
     environment:
-        PORT: 5000
-        DOCKERDATABASE: mongodb://mongo_db:27017/hms
-        KEYGEN: 'w{v{<J2e&$x[/<V#&#G:?Ti?Frv+-P'
-        
-    volumes: 
+      PORT: 5000
+      DOCKERDATABASE: mongodb://mongo_db:27017/hms
+      KEYGEN: 'w{v{<J2e&$x[/<V#&#G:?Ti?Frv+-P'
+    networks:
+      - hmsbackend_default
+    volumes:
       - ./uploads:/app/uploads
       #- ./errorlogs:/app/errorlogs
     depends_on:
       - mongo_db
-  
 
-  #hms services2
+  # HMS Service 2
   hmsservicestwo:
     container_name: hmsservicestwo
     restart: unless-stopped
@@ -34,18 +38,18 @@ services:
     ports:
       - 5001:5000
     environment:
-        PORT: 5000
-        DOCKERDATABASE: mongodb://mongo_db:27017/hms
-        KEYGEN: 'w{v{<J2e&$x[/<V#&#G:?Ti?Frv+-P'
-
-    volumes: 
+      PORT: 5000
+      DOCKERDATABASE: mongodb://mongo_db:27017/hms
+      KEYGEN: 'w{v{<J2e&$x[/<V#&#G:?Ti?Frv+-P'
+    networks:
+      - hmsbackend_default
+    volumes:
       - ./uploads:/app/uploads
       #- ./errorlogs:/app/errorlogs
     depends_on:
       - mongo_db
-    
 
-#hms services3
+  # HMS Service 3
   hmsservicesthree:
     container_name: hmsservicesthree
     restart: unless-stopped
@@ -53,19 +57,22 @@ services:
     ports:
       - 5002:5000
     environment:
-        PORT: 5000
-        DOCKERDATABASE: mongodb://mongo_db:27017/hms
-        KEYGEN: 'w{v{<J2e&$x[/<V#&#G:?Ti?Frv+-P'
-
-
-    volumes: 
+      PORT: 5000
+      DOCKERDATABASE: mongodb://mongo_db:27017/hms
+      KEYGEN: 'w{v{<J2e&$x[/<V#&#G:?Ti?Frv+-P'
+    networks:
+      - hmsbackend_default
+    volumes:
       - ./uploads:/app/uploads
       #- ./errorlogs:/app/errorlogs
     depends_on:
       - mongo_db
-  
 
- 
-
+# Volumes
 volumes:
   newdb:
+
+# Networks
+networks:
+  hmsbackend_default:
+    driver: bridge
