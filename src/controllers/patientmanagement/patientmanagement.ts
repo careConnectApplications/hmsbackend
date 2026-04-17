@@ -178,10 +178,11 @@ export var createpatients = async (req:any,res:any) =>{
           req.body.isHMOCover=configuration.ishmo[0]
 
         } 
+      console.log("new request body", req.body);
         var {authorizationcode,policecase,physicalassault,sexualassault,policaename,servicenumber,policephonenumber,division,dateOfBirth,phoneNumber,firstName,lastName,gender,clinic, reason, appointmentdate, appointmentcategory, appointmenttype,isHMOCover} = req.body;
         //validation
          validateinputfaulsyvalue({phoneNumber,firstName,lastName,gender,clinic,appointmentdate, appointmentcategory, appointmenttype,isHMOCover});
-        
+        console.log("isHMOCove", isHMOCove);
         if(isHMOCover==configuration.ishmo[1] || isHMOCover == true){
           console.log("here");
           //throw new Error(configuration.error.errorauthorizehmo);
@@ -221,6 +222,8 @@ export var createpatients = async (req:any,res:any) =>{
         //console.log('appointmentprice', appointmentPrice);
       
       var {isHMOCover} = req.body;
+      console.log("configuration.category[3]", configuration.category[3]);
+      console.log("isHMOCover", isHMOCover);
         var newRegistrationPrice:any = await readoneprice({servicecategory:configuration.category[3],isHMOCover});
         if(isHMOCover !== configuration.ishmo[1] && !newRegistrationPrice){
           throw new Error(configuration.error.errornopriceset);
