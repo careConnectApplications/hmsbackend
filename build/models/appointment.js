@@ -609,6 +609,7 @@ appointmentSchema.index({ appointmentcategory: 1 }); // Filter by category
 appointmentSchema.index({ appointmenttype: 1 }); // Filter by type
 appointmentSchema.index({ status: 1 }); // Filter by status
 appointmentSchema.index({ createdAt: -1 }); // Sort by creation time
+appointmentSchema.index({ clinic: 1, status: 1, createdAt: -1 });
 appointmentSchema.index({ clinic: 1, status: 1 });
 const appointment = (0, mongoose_1.model)('Appointment', appointmentSchema);
 exports.default = appointment;

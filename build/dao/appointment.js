@@ -49,18 +49,59 @@ function modifiedreadallappointment(query, aggregatequery) {
         }
     });
 }
+/*
+export async function optimizedreadallappointment(aggregatequery:any,page:any,size:any){
+
+  try{
+    const skip = (page - 1) * size;
+   var appointmentdetails = await Appointment.aggregate(aggregatequery).skip(skip).limit(size).sort({ createdAt: -1 });;
+  const totalappointmentdetails = (await Appointment.aggregate(aggregatequery)).length;
+  const totalPages = Math.ceil(totalappointmentdetails / size);
+  return { appointmentdetails, totalPages,totalappointmentdetails, size, page};
+  
+  }
+  catch(err:any){
+    console.log(err);
+        throw new Error(configuration.error.erroruserread);
+  
+  }
+  
+  
+  }
+*/
+/*
+export async function optimizedreadallappointment(aggregatequery:any, page:any, size:any) {
+  try {
+    const [result] = await Appointment.aggregate(aggregatequery);
+    const appointmentdetails = result.paginatedResults;
+    const totalappointmentdetails = result.totalCount[0]?.count || 0;
+    const totalPages = Math.ceil(totalappointmentdetails / size);
+    return { appointmentdetails, totalPages, totalappointmentdetails, size, page };
+  } catch (err) {
+    console.log(err);
+    throw new Error(configuration.error.erroruserread);
+  }
+}
+  */
 function optimizedreadallappointment(aggregatequery, page, size) {
     return __awaiter(this, void 0, void 0, function* () {
+        var _a, _b;
         try {
-            const skip = (page - 1) * size;
-            var appointmentdetails = yield appointment_1.default.aggregate(aggregatequery).skip(skip).limit(size).sort({ createdAt: -1 });
-            ;
-            const totalappointmentdetails = (yield appointment_1.default.aggregate(aggregatequery)).length;
+            // Allow MongoDB to use disk for large sorts/lookups
+            const [result] = yield appointment_1.default.aggregate(aggregatequery).allowDiskUse(true);
+            const appointmentdetails = (result === null || result === void 0 ? void 0 : result.paginatedResults) || [];
+            const totalappointmentdetails = ((_b = (_a = result === null || result === void 0 ? void 0 : result.totalCount) === null || _a === void 0 ? void 0 : _a[0]) === null || _b === void 0 ? void 0 : _b.count) || 0;
             const totalPages = Math.ceil(totalappointmentdetails / size);
-            return { appointmentdetails, totalPages, totalappointmentdetails, size, page };
+            return {
+                appointmentdetails,
+                totalPages,
+                totalappointmentdetails,
+                size,
+                page,
+            };
         }
         catch (err) {
-            console.log(err);
+            console.error(err);
             throw new Error(config_1.default.error.erroruserread);
         }
     });

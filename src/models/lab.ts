@@ -62,6 +62,12 @@ const labSchema = new Schema({
     ref: "Users",
     default: null,
   },
+   firstName: String,
+   lastName: String,
+   MRN: String,
+   phoneNumber: String,
+   HMOId: String,
+   HMOName: String ,
   payment: {
       type: Schema.Types.ObjectId,
       ref: "Payment",

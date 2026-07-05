@@ -41,8 +41,10 @@ const scheduleappointment = (req, res) => __awaiter(void 0, void 0, void 0, func
         (0, otherservices_1.validateinputfaulsyvalue)({ clinic, appointmentdate, appointmentcategory, appointmenttype, patient });
         //pending
         //validatioborder
-        var selectquery = { "title": 1, "firstName": 1, "middleName": 1, "lastName": 1, "country": 1, "stateOfResidence": 1, "LGA": 1, "address": 1, "age": 1, "dateOfBirth": 1, "gender": 1, "nin": 1, "phoneNumber": 1, "email": 1, "oldMRN": 1, "nextOfKinName": 1, "nextOfKinRelationship": 1, "nextOfKinPhoneNumber": 1, "nextOfKinAddress": 1,
-            "maritalStatus": 1, "disability": 1, "occupation": 1, "isHMOCover": 1, "HMOName": 1, "HMOId": 1, "HMOPlan": 1, "MRN": 1, "createdAt": 1, "passport": 1 };
+        var selectquery = {
+            "title": 1, "firstName": 1, "middleName": 1, "lastName": 1, "country": 1, "stateOfResidence": 1, "LGA": 1, "address": 1, "age": 1, "dateOfBirth": 1, "gender": 1, "nin": 1, "phoneNumber": 1, "email": 1, "oldMRN": 1, "nextOfKinName": 1, "nextOfKinRelationship": 1, "nextOfKinPhoneNumber": 1, "nextOfKinAddress": 1,
+            "maritalStatus": 1, "disability": 1, "occupation": 1, "isHMOCover": 1, "HMOName": 1, "HMOId": 1, "HMOPlan": 1, "MRN": 1, "createdAt": 1, "passport": 1
+        };
         //search patient if available and por
         const patientrecord = yield (0, patientmanagement_1.readonepatient)({ _id: patient, status: config_1.default.status[1] }, selectquery, '', '');
         // const patientrecord =  await readonepatient({_id:patient},selectquery,'','');
@@ -87,9 +89,9 @@ const getAllSchedulesoptimized = (req, res) => __awaiter(void 0, void 0, void 0,
         const page = parseInt(req.query.page) || 1;
         const size = parseInt(req.query.size) || 150;
         let filter = {};
-        //var otherfilter:any = {};
-        //appointment, type, MRN,patient name, 
-        // Add filters based on query parameters
+        const twoMonthsAgo = new Date();
+        twoMonthsAgo.setMonth(twoMonthsAgo.getMonth() - 2);
+        filter.createdAt = { $gte: twoMonthsAgo };
         if (firstName) {
             //console.log(req.query.firstName)
             filter.firstName = new RegExp(firstName, 'i'); // Case-insensitive search for name
@@ -103,16 +105,6 @@ const getAllSchedulesoptimized = (req, res) => __awaiter(void 0, void 0, void 0,
         if (appointmenttype) {
             filter.appointmenttype = new RegExp(appointmenttype, 'i'); // Case-insensitive search for email
         }
-        /*
-          if(status == "paid"){
-            otherfilter.status=configuration.status[3]
-         
-             }
-             else{
-              otherfilter.status=configuration.status[5];
-         
-             }
-              */
         const referencegroup = [
             //look up patient
             //add query
@@ -392,156 +384,183 @@ const getAllPaidSchedulesoptimized = (req, res) => __awaiter(void 0, void 0, voi
         var page = parseInt(req.query.page) || 1;
         var size = parseInt(req.query.size) || 150;
         // var statusfilter:any =status?{status,clinic}:{clinic};
-        /*
-        var filter:any = {};
-            var statusfilter:any =status?{status,clinic}:{clinic};
-            // Add filters based on query parameters
-            if (firstName) {
-              filter.firstName = new RegExp(firstName, 'i'); // Case-insensitive search for name
-            }
-            if(MRN) {
-              filter.MRN = new RegExp(MRN, 'i');
-            }
-            if (HMOId) {
-              filter.HMOId = new RegExp(HMOId, 'i'); // Case-insensitive search for email
-            }
-            if (lastName) {
-              filter.lastName = new RegExp(lastName, 'i'); // Case-insensitive search for email
-            }
-            if (phoneNumber) {
-              filter.phoneNumber = new RegExp(phoneNumber, 'i'); // Case-insensitive search for email
-            }
-          
-        */
         // const queryresult = await readallappointment({$or:[{status:configuration.status[5]},{status:configuration.status[6]},{status:configuration.status[9]}],clinic},{},'patient','doctor','payment');
-        let aggregatequery = [
-            /*
-            {
-              $match:statusfilter
-             },
-            {
-            $lookup: {
-              from: 'payments',
-              localField: 'payment',
-              foreignField: '_id',
-              as: 'payment'
-            }
-          },
-          {
-            $lookup: {
-              from: 'patientsmanagements',
-              localField: 'patient',
-              foreignField: '_id',
-              as: 'patient'
-            }
-          },
-          {
-            $lookup: {
-              from: 'users',
-              localField: 'doctor',
-              foreignField: '_id',
-              as: 'doctor'
-            }
-          },
-          {
-            $lookup: {
-              from: 'vitalcharts',
-              localField: 'vitals',
-              foreignField: '_id',
-              as: 'vitals'
-            }
-          },
-          //vitals
-          {
-            $unwind:{
-              path:'$payment' , // Deconstruct the payment array (from the lookup)
-            preserveNullAndEmptyArrays: true
-            }
-          },
-          {
-            $unwind: {
-              path: '$patient',
-              preserveNullAndEmptyArrays: true
+        /* let aggregatequery =
+         [
+        
+        { $match: { clinic, ...(status && { status }) } },
+     
+      {
+       $lookup: {
+         from: 'patientsmanagements',
+         localField: 'patient',
+         foreignField: '_id',
+         as: 'patient'
+       }
+     },
+     { $unwind: '$patient' },
+     {
+       $match: {
+         ...(firstName ? { 'patient.firstName': new RegExp(firstName, 'i') } : {}),
+         ...(MRN ? { 'patient.MRN': new RegExp(MRN, 'i') } : {}),
+         ...(HMOId ? { 'patient.HMOId': new RegExp(HMOId, 'i') } : {}),
+         ...(lastName ? { 'patient.lastName': new RegExp(lastName, 'i') } : {}),
+         ...(phoneNumber ? { 'patient.phoneNumber': new RegExp(phoneNumber, 'i') } : {}),
+       }
+     },
+       {
+         $lookup: {
+           from: 'payments',
+           localField: 'payment',
+           foreignField: '_id',
+           as: 'payment'
+         }
+       },
+        { $unwind: { path: '$payment', preserveNullAndEmptyArrays: true } },
+        {
+         $match: {
+           $or: [
+             { 'payment.status': configuration.status[3] },
+             { 'patient.isHMOCover': configuration.ishmo[1] }
+           ]
+         }
+       },
+        {
+           $lookup: {
+             from: 'vitalcharts',
+             localField: 'vitals',
+             foreignField: '_id',
+             as: 'vitals'
+           }
+         },
       
-            }  // Deconstruct the patient array (from the lookup)
-          },
-          {
-            $unwind: {
-              path: '$vitals',
-              preserveNullAndEmptyArrays: true
-      
-            }  // Deconstruct the patient array (from the lookup)
-          },
-         
-          {
-            $match: { $or:[{'payment.status': configuration.status[3]},{'patient.isHMOCover':configuration.ishmo[1]}] }  // Filter payment
-          },
-          {
-            $project:{
+        {
+           $unwind: {
+             path: '$vitals',
+             preserveNullAndEmptyArrays: true
+     
+           }
+         },
+       {
+         $project: {
               _id:1,
-              createdAt:1,
-              reason:1,
-              updatedAt:1,
-              appointmenttype:1,
-              appointmentdate:1,
-              clinic:1,
-              appointmentcategory:1,
-              firstName:"$patient.firstName",
-              lastName:"$patient.lastName",
-              phoneNumber:"$patient.phoneNumber",
-              MRN:"$patient.MRN",
-              patient:"$patient",
-              vitals:1,
-              HMOId:"$patient.HMOId",
-              HMOName:"$patient.HMOName",
-              vitalstatus:"$vitals.status",
-              status:1,
-              paymentstatus:"$payment.status",
-              paymentreference:"$payment.paymentreference",
-              doctorsfirstName:"$doctor.firstName",
-              doctorslastName:"$doctor.lastName"
-            }
-          },
-          {
-            $match:filter
-          },
-          */
-            { $match: Object.assign({ clinic }, (status && { status })) },
+             createdAt:1,
+             reason:1,
+             updatedAt:1,
+             appointmenttype:1,
+             appointmentdate:1,
+             clinic:1,
+             appointmentcategory:1,
+             //patient:{ $arrayElemAt: ["$patient", 0] },
+             patient:1,
+             vitals:1,
+             vitalstatus:"$vitals.status",
+             status:1,
+         }
+       },
+       { $sort: { createdAt: -1 } },
+       ];
+         */
+        /*
+        const aggregatequery = [
+       { $match: { clinic, ...(status && { status }) } },
+       {
+         $lookup: {
+           from: 'patientsmanagements',
+           localField: 'patient',
+           foreignField: '_id',
+           as: 'patient'
+         }
+       },
+       { $unwind: '$patient' },
+       {
+         $match: {
+           ...(firstName ? { 'patient.firstName': new RegExp(firstName, 'i') } : {}),
+           ...(MRN ? { 'patient.MRN': new RegExp(MRN, 'i') } : {}),
+           ...(HMOId ? { 'patient.HMOId': new RegExp(HMOId, 'i') } : {}),
+           ...(lastName ? { 'patient.lastName': new RegExp(lastName, 'i') } : {}),
+           ...(phoneNumber ? { 'patient.phoneNumber': new RegExp(phoneNumber, 'i') } : {}),
+         }
+       },
+       {
+         $lookup: {
+           from: 'payments',
+           localField: 'payment',
+           foreignField: '_id',
+           as: 'payment'
+         }
+       },
+       { $unwind: { path: '$payment', preserveNullAndEmptyArrays: true } },
+       {
+         $match: {
+           $or: [
+             { 'payment.status': configuration.status[3] },
+             { 'patient.isHMOCover': configuration.ishmo[1] }
+           ]
+         }
+       },
+       {
+         $lookup: {
+           from: 'vitalcharts',
+           localField: 'vitals',
+           foreignField: '_id',
+           as: 'vitals'
+         }
+       },
+       { $unwind: { path: '$vitals', preserveNullAndEmptyArrays: true } },
+       {
+         $project: {
+           _id: 1,
+           createdAt: 1,
+           reason: 1,
+           updatedAt: 1,
+           appointmenttype: 1,
+           appointmentdate: 1,
+           clinic: 1,
+           appointmentcategory: 1,
+           patient: 1,
+           vitals: 1,
+           vitalstatus: '$vitals.status',
+           status: 1
+         }
+       },
+       { $sort: { createdAt: -1 } },
+       {
+         $facet: {
+           paginatedResults: [
+             { $skip: (page - 1) * size },
+             { $limit: size }
+           ],
+           totalCount: [
+             { $count: 'count' }
+           ]
+         }
+       }
+     ];
+     */
+        const aggregatequery = [
+            // 1️⃣ Match by indexed fields first
+            //{ $match: { clinic, ...(status && { status }) } },
+            {
+                $match: Object.assign(Object.assign({ clinic }, (status && { status })), { createdAt: {
+                        $gte: new Date(new Date().setMonth(new Date().getMonth() - 2)) // last 2 months
+                    } })
+            },
+            // 2️⃣ Lookup patients (filtered inline)
             {
                 $lookup: {
                     from: 'patientsmanagements',
-                    localField: 'patient',
-                    foreignField: '_id',
+                    let: { patientId: '$patient' },
+                    pipeline: [
+                        {
+                            $match: Object.assign(Object.assign(Object.assign(Object.assign(Object.assign({ $expr: { $eq: ['$_id', '$$patientId'] } }, (firstName ? { firstName: new RegExp('^' + firstName, 'i') } : {})), (lastName ? { lastName: new RegExp('^' + lastName, 'i') } : {})), (MRN ? { MRN: new RegExp('^' + MRN, 'i') } : {})), (HMOId ? { HMOId: new RegExp('^' + HMOId, 'i') } : {})), (phoneNumber ? { phoneNumber: new RegExp('^' + phoneNumber, 'i') } : {}))
+                        }
+                    ],
                     as: 'patient'
                 }
             },
             { $unwind: '$patient' },
-            {
-                $match: Object.assign(Object.assign(Object.assign(Object.assign(Object.assign({}, (firstName ? { 'patient.firstName': new RegExp(firstName, 'i') } : {})), (MRN ? { 'patient.MRN': new RegExp(MRN, 'i') } : {})), (HMOId ? { 'patient.HMOId': new RegExp(HMOId, 'i') } : {})), (lastName ? { 'patient.lastName': new RegExp(lastName, 'i') } : {})), (phoneNumber ? { 'patient.phoneNumber': new RegExp(phoneNumber, 'i') } : {}))
-            },
-            /*
-              {
-                $lookup: {
-                  from: 'patientsmanagements',
-                  let: { patientId: '$patient' },
-                  pipeline: [
-                    {
-                      $match: {
-                        $expr: { $eq: ['$_id', '$$patientId'] },
-                        ...(firstName ? { firstName: new RegExp(firstName, 'i') } : {}),
-                        ...(MRN ? { MRN: new RegExp(MRN, 'i') } : {}),
-                        ...(HMOId ? { HMOId: new RegExp(HMOId, 'i') } : {}),
-                        ...(lastName ? { lastName: new RegExp(lastName, 'i') } : {}),
-                        ...(phoneNumber ? { phoneNumber: new RegExp(phoneNumber, 'i') } : {}),
-                      }
-                    }
-                  ],
-                  as: 'patient'
-                }
-              },
-              */
-            //{ $unwind: { path: '$patient', preserveNullAndEmptyArrays: false } },
-            // Repeat lookup structure for payments, doctor, vitals (but skip if not needed)
+            // 3️⃣ Lookup payments
             {
                 $lookup: {
                     from: 'payments',
@@ -551,6 +570,7 @@ const getAllPaidSchedulesoptimized = (req, res) => __awaiter(void 0, void 0, voi
                 }
             },
             { $unwind: { path: '$payment', preserveNullAndEmptyArrays: true } },
+            // 4️⃣ Filter by payment status or HMO coverage
             {
                 $match: {
                     $or: [
@@ -559,44 +579,47 @@ const getAllPaidSchedulesoptimized = (req, res) => __awaiter(void 0, void 0, voi
                     ]
                 }
             },
-            {
-                $lookup: {
-                    from: 'vitalcharts',
-                    localField: 'vitals',
-                    foreignField: '_id',
-                    as: 'vitals'
-                }
-            },
-            {
-                $unwind: {
-                    path: '$vitals',
-                    preserveNullAndEmptyArrays: true
-                } // Deconstruct the patient array (from the lookup)
-            },
-            {
-                $project: {
-                    _id: 1,
-                    createdAt: 1,
-                    reason: 1,
-                    updatedAt: 1,
-                    appointmenttype: 1,
-                    appointmentdate: 1,
-                    clinic: 1,
-                    appointmentcategory: 1,
-                    //patient:{ $arrayElemAt: ["$patient", 0] },
-                    patient: 1,
-                    vitals: 1,
-                    vitalstatus: "$vitals.status",
-                    status: 1,
-                    //doctorsfirstName:"$doctor.firstName",
-                    //doctorslastName:"$doctor.lastName"
-                }
-            },
+            // 5️⃣ Sort early for pagination efficiency
             { $sort: { createdAt: -1 } },
+            // 6️⃣ Use $facet for combined pagination and count
+            {
+                $facet: {
+                    paginatedResults: [
+                        { $skip: (page - 1) * size },
+                        { $limit: size },
+                        // 7️⃣ Lookup vitals only for the current page
+                        {
+                            $lookup: {
+                                from: 'vitalcharts',
+                                localField: 'vitals',
+                                foreignField: '_id',
+                                as: 'vitals'
+                            }
+                        },
+                        { $unwind: { path: '$vitals', preserveNullAndEmptyArrays: true } },
+                        // 8️⃣ Final projection
+                        {
+                            $project: {
+                                _id: 1,
+                                createdAt: 1,
+                                reason: 1,
+                                updatedAt: 1,
+                                appointmenttype: 1,
+                                appointmentdate: 1,
+                                clinic: 1,
+                                appointmentcategory: 1,
+                                patient: 1,
+                                vitals: 1,
+                                vitalstatus: '$vitals.status',
+                                status: 1,
+                            }
+                        }
+                    ],
+                    totalCount: [{ $count: 'count' }]
+                }
+            }
         ];
         const queryresult = yield (0, appointment_1.optimizedreadallappointment)(aggregatequery, page, size);
-        //const queryresult = await readallappointment({clinic},{},'patient','doctor',{path:'payment', match: { status: { $eq: configuration.status[3] } },});
-        //'payment.status':configuration.status[3]
         res.status(200).json({
             queryresult,
             status: true
@@ -813,11 +836,20 @@ var laborder = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             //create testrecord
             let testrecord;
             //var testrecord = await createlab({testname:testname[i],patient:appointment.patient,appointment:appointment._id,payment:createpaymentqueryresult._id,appointmentid:appointment.appointmentid,testid,department:testsetting[0].department});
+            let patientObj = foundPatient || appointment.patient;
+            let patientData = {
+                firstName: patientObj === null || patientObj === void 0 ? void 0 : patientObj.firstName,
+                lastName: patientObj === null || patientObj === void 0 ? void 0 : patientObj.lastName,
+                MRN: patientObj === null || patientObj === void 0 ? void 0 : patientObj.MRN,
+                phoneNumber: patientObj === null || patientObj === void 0 ? void 0 : patientObj.phoneNumber,
+                HMOId: patientObj === null || patientObj === void 0 ? void 0 : patientObj.HMOId,
+                HMOName: patientObj === null || patientObj === void 0 ? void 0 : patientObj.HMOName
+            };
             if ((foundPatient === null || foundPatient === void 0 ? void 0 : foundPatient.isHMOCover) == config_1.default.ishmo[0] || (appointment.patient).isHMOCover == config_1.default.ishmo[0]) {
-                testrecord = yield (0, lab_1.createlab)({ testname: testname[i], patient: appointment.patient, appointment: appointment._id, appointmentid: appointment.appointmentid, testid, department, amount: Number(testPrice.amount) });
+                testrecord = yield (0, lab_1.createlab)(Object.assign({ testname: testname[i], patient: appointment.patient, appointment: appointment._id, appointmentid: appointment.appointmentid, testid, department, amount: Number(testPrice.amount) }, patientData));
             }
             else {
-                testrecord = yield (0, lab_1.createlab)({ testname: testname[i], patient: appointment.patient, appointment: appointment._id, appointmentid: appointment.appointmentid, testid, department, amount: ((100 - Number(testPrice.percentageofhmocover)) / 100) * Number(testPrice.amount) });
+                testrecord = yield (0, lab_1.createlab)(Object.assign({ testname: testname[i], patient: appointment.patient, appointment: appointment._id, appointmentid: appointment.appointmentid, testid, department, amount: ((100 - Number(testPrice.percentageofhmocover)) / 100) * Number(testPrice.amount) }, patientData));
             }
             testsid.push(testrecord._id);
             //paymentids.push(createpaymentqueryresult._id);
