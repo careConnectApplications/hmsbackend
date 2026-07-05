@@ -117,8 +117,7 @@ const readallscheduledlaboptimized = (req, res) => __awaiter(void 0, void 0, voi
         var { status, firstName, MRN, HMOId, lastName, phoneNumber, testname } = req.query;
         const page = parseInt(req.query.page) || 1;
         const size = parseInt(req.query.size) || 150;
-        const filter = {};
-        var statusfilter = status ? { status } : testname ? { testname } : {};
+        var filter = status ? { status } : testname ? { testname } : {};
         if (firstName) {
             filter.firstName = new RegExp(firstName, 'i'); // Case-insensitive search for name
         }
@@ -134,10 +133,14 @@ const readallscheduledlaboptimized = (req, res) => __awaiter(void 0, void 0, voi
         if (phoneNumber) {
             filter.phoneNumber = new RegExp(phoneNumber, 'i'); // Case-insensitive search for email
         }
+        const skip = (page - 1) * size;
         let aggregatequery = [
             {
-                $match: statusfilter
+                $match: filter
             },
+            { $sort: { createdAt: -1 } },
+            { $skip: skip },
+            { $limit: size },
             {
                 $lookup: {
                     from: 'patientsmanagements',
@@ -160,23 +163,22 @@ const readallscheduledlaboptimized = (req, res) => __awaiter(void 0, void 0, voi
                     updatedAt: 1,
                     testid: 1,
                     department: 1,
-                    firstName: "$patient.firstName",
-                    lastName: "$patient.lastName",
-                    phoneNumber: "$patient.phoneNumber",
-                    MRN: "$patient.MRN",
+                    firstName: { $ifNull: ["$firstName", "$patient.firstName"] },
+                    lastName: { $ifNull: ["$lastName", "$patient.lastName"] },
+                    phoneNumber: { $ifNull: ["$phoneNumber", "$patient.phoneNumber"] },
+                    MRN: { $ifNull: ["$MRN", "$patient.MRN"] },
                     patient: "$patient",
-                    HMOId: "$patient.HMOId",
-                    HMOName: "$patient.HMOName",
+                    HMOId: { $ifNull: ["$HMOId", "$patient.HMOId"] },
+                    HMOName: { $ifNull: ["$HMOName", "$patient.HMOName"] },
                     status: 1,
                 }
-            },
-            {
-                $match: filter
-            },
+            }
         ];
-        const queryresult = yield (0, lab_1.optimizedreadalllab)(aggregatequery, page, size);
+        const labdetails = yield (0, lab_1.readlabaggregate)(aggregatequery);
+        const totallabdetails = yield (0, lab_1.countlab)(filter);
+        const totalPages = Math.ceil(totallabdetails / size);
         res.status(200).json({
-            queryresult,
+            queryresult: { labdetails, totalPages, totallabdetails, size, page },
             status: true
         });
     }

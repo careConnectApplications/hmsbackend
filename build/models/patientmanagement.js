@@ -188,6 +188,7 @@ patientSchema.pre("save", function (next) {
     });
 });
 patientSchema.index({ _id: 1, firstName: 1, MRN: 1, HMOId: 1, lastName: 1, phoneNumber: 1 });
+patientSchema.index({ firstName: 1, lastName: 1, MRN: 1, HMOId: 1, phoneNumber: 1 });
 patientSchema.index({ firstName: 1 });
 patientSchema.index({ lastName: 1 });
 patientSchema.index({ MRN: 1 });

@@ -50,6 +50,12 @@ const labSchema = new mongoose_1.Schema({
         ref: "Users",
         default: null,
     },
+    firstName: String,
+    lastName: String,
+    MRN: String,
+    phoneNumber: String,
+    HMOId: String,
+    HMOName: String,
     payment: {
         type: mongoose_1.Schema.Types.ObjectId,
         ref: "Payment",
