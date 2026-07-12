@@ -249,7 +249,7 @@ const isObjectAvailable = (objectName) => {
     return Object.keys(objectName).length >= 0 && objectName.constructor === Object;
 };
 exports.isObjectAvailable = isObjectAvailable;
-function validatepayment(patient) {
+function validatepayment(patient, servicetype) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             // Ensure patient has made a paid Appointment payment today, unless they are currently admitted
@@ -267,7 +267,7 @@ function validatepayment(patient) {
                     createdAt: { $gte: todayStart, $lte: todayEnd }
                 });
                 if (!appointmentPayment) {
-                    throw new Error('Patient has not made payment for an appointment today. Pharmacy order cannot be processed.');
+                    throw new Error(`Patient has not made payment for an appointment today. ${servicetype} order cannot be processed.`);
                 }
             }
             return findAdmissionForPayment;

@@ -124,7 +124,7 @@ var pharmacyorderwithoutconfirmation = (req, res) => __awaiter(void 0, void 0, v
         if (!patient) {
             throw new Error(`Patient donot ${config_1.default.error.erroralreadyexit} or has not made payment for registration`);
         }
-        const findAdmissionForPayment = yield (0, otherservices_1.validatepayment)(patient._id);
+        const findAdmissionForPayment = yield (0, otherservices_1.validatepayment)(patient._id, config_1.default.category[1]);
         var appointment = {
             _id: id,
             appointmentid: String(Date.now())

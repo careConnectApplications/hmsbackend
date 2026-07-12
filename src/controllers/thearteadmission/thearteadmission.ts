@@ -1,5 +1,5 @@
 import  mongoose from 'mongoose';
-import { validateinputfaulsyvalue } from "../../utils/otherservices";
+import { validateinputfaulsyvalue, validatepayment } from "../../utils/otherservices";
 import {createthearteadmission,readallthearteadmission,updatethearteadmission,readonethearteadmission} from  "../../dao/theatreadmission";
 import  {updatepatient,readonepatient}  from "../../dao/patientmanagement";
 import {readonetheatremanagement,updatetheatremanagement} from "../../dao/theatre";
@@ -48,28 +48,9 @@ export var refertheatreadmission= async (req:any, res:any) =>{
         throw new Error(`Patient donot ${configuration.error.erroralreadyexit} or has not made payment for registration`);
 
       }
-  // Ensure patient has made a paid Appointment payment today, unless they are currently admitted
-      const todayStart = new Date();
-      todayStart.setHours(0, 0, 0, 0);
-      const todayEnd = new Date();
-      todayEnd.setHours(23, 59, 59, 999);
   
-      const findAdmissionForPayment = await readoneadmission({ patient: patient._id, status: { $ne: configuration.admissionstatus[5] } }, {}, '');
+      const findAdmissionForPayment = await validatepayment(patient._id,"Admission");
   
-      if (!findAdmissionForPayment) {
-        // Patient is not admitted — enforce payment check
-        const appointmentPayment = await readonepayment({
-          patient: patient._id,
-          status: configuration.status[3],            // 'paid'
-          paymentcategory: configuration.category[0],  // 'Appointment'
-          createdAt: { $gte: todayStart, $lte: todayEnd }
-        });
-  
-        if (!appointmentPayment) {
-          throw new Error('Patient has not made payment for an appointment today. Pharmacy order cannot be processed.');
-        }
-      }
-   
   //check that patient have not been admitted
   var  findAdmission = await readonethearteadmission({patient:patient._id, status:{$ne: configuration.admissionstatus[5]}},{},'');
   if(findAdmission){
