@@ -218,7 +218,7 @@ if(!objectName || objectName.constructor !== Object ){
 }
 
 
-export async function validatepayment(patient:any){
+export async function validatepayment(patient:any, servicetype:any){
   try{
   // Ensure patient has made a paid Appointment payment today, unless they are currently admitted
       const todayStart = new Date();
@@ -238,7 +238,7 @@ export async function validatepayment(patient:any){
         });
   
         if (!appointmentPayment) {
-          throw new Error('Patient has not made payment for an appointment today. Pharmacy order cannot be processed.');
+          throw new Error(`Patient has not made payment for an appointment today. ${servicetype} order cannot be processed.`);
         }
       }
       return findAdmissionForPayment;

@@ -823,7 +823,7 @@ var laborder = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             //  isHMOCover = appointment.patient.isHMOCover;
         }
         // Check if patient is currently admitted (not discharged) — bypass payment check for admitted patients
-        const findAdmission = yield yield (0, otherservices_1.validatepayment)(resolvedPatientId);
+        const findAdmission = yield (0, otherservices_1.validatepayment)(resolvedPatientId, config_1.default.category[2]);
         //console.log(testname);
         //const {servicetypedetails} = await readallservicetype({category: configuration.category[2]},{type:1,category:1,department:1,_id:0});
         //loop through all test and create record in lab order

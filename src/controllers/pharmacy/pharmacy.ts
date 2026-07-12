@@ -132,7 +132,7 @@ export var pharmacyorderwithoutconfirmation= async (req:any, res:any) =>{
     }
 
     
-  const findAdmissionForPayment = await validatepayment(patient._id);
+  const findAdmissionForPayment = await validatepayment(patient._id, configuration.category[1]);
   var appointment:any={
       _id:id,
       appointmentid:String(Date.now())

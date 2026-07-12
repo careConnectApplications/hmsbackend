@@ -866,7 +866,7 @@ export var laborder = async (req: any, res: any) => {
     
 
     // Check if patient is currently admitted (not discharged) — bypass payment check for admitted patients
-    const findAdmission = await await validatepayment(resolvedPatientId); 
+    const findAdmission = await validatepayment(resolvedPatientId,configuration.category[2]); 
     
 
 
