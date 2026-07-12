@@ -7,6 +7,7 @@ import { readallservicetype } from "../../dao/servicetype";
 import { readone } from "../../dao/users";
 import { readoneprice } from "../../dao/price";
 import { createpayment, readonepayment } from "../../dao/payment";
+import {validatepayment} from "../../utils/otherservices";
 import mongoose from 'mongoose';
 //import {createvital} from "../../dao/vitals";
 import { createlab } from "../../dao/lab";
@@ -862,28 +863,11 @@ export var laborder = async (req: any, res: any) => {
       //  isHMOCover = appointment.patient.isHMOCover;
     }
 
-    // Ensure patient has made a paid Appointment payment today before lab order can be processed
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
-    const todayEnd = new Date();
-    todayEnd.setHours(23, 59, 59, 999);
+    
 
     // Check if patient is currently admitted (not discharged) — bypass payment check for admitted patients
-    const findAdmission = await readoneadmission({ patient: resolvedPatientId, status: { $ne: configuration.admissionstatus[5] } }, {}, '');
-
-    if (!findAdmission) {
-      // Patient is not admitted — enforce payment check
-      const appointmentPayment = await readonepayment({
-        patient: resolvedPatientId,
-        status: configuration.status[3],            // 'paid'
-        paymentcategory: configuration.category[0],  // 'Appointment'
-        createdAt: { $gte: todayStart, $lte: todayEnd }
-      });
-
-      if (!appointmentPayment) {
-        throw new Error('Patient has not made payment for an appointment today. Lab order cannot be processed.');
-      }
-    }
+    const findAdmission = await await validatepayment(resolvedPatientId); 
+    
 
 
 

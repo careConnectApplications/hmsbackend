@@ -53,6 +53,7 @@ exports.validateinputyesno = validateinputyesno;
 exports.validateinputfornumber = validateinputfornumber;
 exports.uploaddocument = uploaddocument;
 exports.convertexceltojson = convertexceltojson;
+exports.validatepayment = validatepayment;
 const promises_1 = __importDefault(require("fs/promises"));
 const { v4: uuidv4 } = require('uuid');
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
@@ -62,6 +63,8 @@ const config_1 = __importDefault(require("../config"));
 const path = __importStar(require("path"));
 const convert_excel_to_json_1 = __importDefault(require("convert-excel-to-json"));
 const patientmanagement_1 = require("../dao/patientmanagement");
+const admissions_1 = require("../dao/admissions");
+const payment_1 = require("../dao/payment");
 var encrypt = function (password) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
@@ -246,3 +249,31 @@ const isObjectAvailable = (objectName) => {
     return Object.keys(objectName).length >= 0 && objectName.constructor === Object;
 };
 exports.isObjectAvailable = isObjectAvailable;
+function validatepayment(patient) {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            // Ensure patient has made a paid Appointment payment today, unless they are currently admitted
+            const todayStart = new Date();
+            todayStart.setHours(0, 0, 0, 0);
+            const todayEnd = new Date();
+            todayEnd.setHours(23, 59, 59, 999);
+            const findAdmissionForPayment = yield (0, admissions_1.readoneadmission)({ patient: patient, status: { $ne: config_1.default.admissionstatus[5] } }, {}, '');
+            if (!findAdmissionForPayment) {
+                // Patient is not admitted — enforce payment check
+                const appointmentPayment = yield (0, payment_1.readonepayment)({
+                    patient: patient,
+                    status: config_1.default.status[3], // 'paid'
+                    paymentcategory: { $in: [config_1.default.category[0], config_1.default.category[3]] }, // 'Appointment' 3 or Patient Registration
+                    createdAt: { $gte: todayStart, $lte: todayEnd }
+                });
+                if (!appointmentPayment) {
+                    throw new Error('Patient has not made payment for an appointment today. Pharmacy order cannot be processed.');
+                }
+            }
+            return findAdmissionForPayment;
+        }
+        catch (error) {
+            throw new Error(error.message);
+        }
+    });
+}
