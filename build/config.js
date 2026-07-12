@@ -1035,7 +1035,7 @@ const configuration = {
         errorbase64: "Missing imageBase64",
         errorservicetray: "This service donot exist in your service tray"
     },
-    //environment: "test",
+    // environment: "test",
     environment: "prod",
 };
 exports.default = configuration;
