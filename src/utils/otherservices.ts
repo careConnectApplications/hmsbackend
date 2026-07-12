@@ -7,6 +7,8 @@ import configuration from "../config";
 import * as path from 'path';
 import exeltojson from 'convert-excel-to-json';
 import {readonepatient} from '../dao/patientmanagement';
+import {readoneadmission} from '../dao/admissions';
+import { readonepayment } from "../dao/payment"
 import { count } from "console";
 export var encrypt = async function(password:any){
     try{
@@ -213,4 +215,35 @@ if(!objectName || objectName.constructor !== Object ){
   //return Object.keys(objectName).length === 0;
   return Object.keys(objectName).length >= 0 && objectName.constructor === Object;
   
+}
+
+
+export async function validatepayment(patient:any){
+  try{
+  // Ensure patient has made a paid Appointment payment today, unless they are currently admitted
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+      const todayEnd = new Date();
+      todayEnd.setHours(23, 59, 59, 999);
+  
+      const findAdmissionForPayment = await readoneadmission({ patient: patient, status: { $ne: configuration.admissionstatus[5] } }, {}, '');
+  
+      if (!findAdmissionForPayment) {
+        // Patient is not admitted — enforce payment check
+        const appointmentPayment = await readonepayment({
+          patient: patient,
+          status: configuration.status[3],            // 'paid'
+          paymentcategory: {$in: [configuration.category[0], configuration.category[3]]},  // 'Appointment' 3 or Patient Registration
+          createdAt: { $gte: todayStart, $lte: todayEnd }
+        });
+  
+        if (!appointmentPayment) {
+          throw new Error('Patient has not made payment for an appointment today. Pharmacy order cannot be processed.');
+        }
+      }
+      return findAdmissionForPayment;
+    }
+    catch(error:any){
+      throw new Error(error.message);
+    }
 }

@@ -24,10 +24,11 @@ const patientmanagement_1 = require("../../dao/patientmanagement");
 const users_1 = require("../../dao/users");
 const price_1 = require("../../dao/price");
 const payment_1 = require("../../dao/payment");
+const otherservices_1 = require("../../utils/otherservices");
 const mongoose_1 = __importDefault(require("mongoose"));
 //import {createvital} from "../../dao/vitals";
 const lab_1 = require("../../dao/lab");
-const otherservices_1 = require("../../utils/otherservices");
+const otherservices_2 = require("../../utils/otherservices");
 const config_1 = __importDefault(require("../../config"));
 const { ObjectId } = mongoose_1.default.Types;
 //add vitals for 
@@ -38,7 +39,7 @@ const scheduleappointment = (req, res) => __awaiter(void 0, void 0, void 0, func
         var appointmentid = String(Date.now());
         //const {id} = req.params;
         var { clinic, reason, appointmentdate, appointmentcategory, appointmenttype, patient, policecase, physicalassault, sexualassault, policaename, servicenumber, policephonenumber, division } = req.body;
-        (0, otherservices_1.validateinputfaulsyvalue)({ clinic, appointmentdate, appointmentcategory, appointmenttype, patient });
+        (0, otherservices_2.validateinputfaulsyvalue)({ clinic, appointmentdate, appointmentcategory, appointmenttype, patient });
         //pending
         //validatioborder
         var selectquery = {
@@ -789,7 +790,7 @@ var laborder = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         var testid = String(Date.now());
         var testsid = [];
         //var paymentids =[];
-        (0, otherservices_1.validateinputfaulsyvalue)({ id, testname, department });
+        (0, otherservices_2.validateinputfaulsyvalue)({ id, testname, department });
         //find the record in appointment and validate
         //find patient
         const foundPatient = yield (0, patientmanagement_1.readonepatient)({ _id: id }, {}, '', '');
@@ -821,25 +822,8 @@ var laborder = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             //update appoint with lab order
             //  isHMOCover = appointment.patient.isHMOCover;
         }
-        // Ensure patient has made a paid Appointment payment today before lab order can be processed
-        const todayStart = new Date();
-        todayStart.setHours(0, 0, 0, 0);
-        const todayEnd = new Date();
-        todayEnd.setHours(23, 59, 59, 999);
         // Check if patient is currently admitted (not discharged) — bypass payment check for admitted patients
-        const findAdmission = yield (0, admissions_1.readoneadmission)({ patient: resolvedPatientId, status: { $ne: config_1.default.admissionstatus[5] } }, {}, '');
-        if (!findAdmission) {
-            // Patient is not admitted — enforce payment check
-            const appointmentPayment = yield (0, payment_1.readonepayment)({
-                patient: resolvedPatientId,
-                status: config_1.default.status[3], // 'paid'
-                paymentcategory: config_1.default.category[0], // 'Appointment'
-                createdAt: { $gte: todayStart, $lte: todayEnd }
-            });
-            if (!appointmentPayment) {
-                throw new Error('Patient has not made payment for an appointment today. Lab order cannot be processed.');
-            }
-        }
+        const findAdmission = yield yield (0, otherservices_1.validatepayment)(resolvedPatientId);
         //console.log(testname);
         //const {servicetypedetails} = await readallservicetype({category: configuration.category[2]},{type:1,category:1,department:1,_id:0});
         //loop through all test and create record in lab order
@@ -914,7 +898,7 @@ function addclinicalencounter(req, res) {
             }
             var { diagnosisnote, diagnosisicd10, assessmentnote, clinicalnote, status, plannote, outcome } = req.body;
             //validateinputfaulsyvalue({diagnosisnote,diagnosisicd10,assessmentnote,clinicalnote,outcome,plannote});
-            (0, otherservices_1.validateinputfaulsyvalue)({ diagnosisnote, assessmentnote, clinicalnote, plannote });
+            (0, otherservices_2.validateinputfaulsyvalue)({ diagnosisnote, assessmentnote, clinicalnote, plannote });
             const clinicalencounter = { diagnosisnote, diagnosisicd10, assessmentnote, clinicalnote, plannote, outcome };
             var queryresult;
             //find id 
@@ -968,41 +952,41 @@ function addencounter(req, res) {
             }
             //fromclinicalencounter
             //validate empty object and initialize
-            if (!((0, otherservices_1.isObjectAvailable)(req.body.medicalhistory)))
+            if (!((0, otherservices_2.isObjectAvailable)(req.body.medicalhistory)))
                 req.body.medicalhistory = {};
-            if (!((0, otherservices_1.isObjectAvailable)(req.body.paediatricsspecific)))
+            if (!((0, otherservices_2.isObjectAvailable)(req.body.paediatricsspecific)))
                 req.body.paediatricsspecific = {};
-            if (!((0, otherservices_1.isObjectAvailable)(req.body.cvs)))
+            if (!((0, otherservices_2.isObjectAvailable)(req.body.cvs)))
                 req.body.cvs = {};
-            if (!((0, otherservices_1.isObjectAvailable)(req.body.resp)))
+            if (!((0, otherservices_2.isObjectAvailable)(req.body.resp)))
                 req.body.resp = {};
-            if (!((0, otherservices_1.isObjectAvailable)(req.body.gi)))
+            if (!((0, otherservices_2.isObjectAvailable)(req.body.gi)))
                 req.body.gi = {};
-            if (!((0, otherservices_1.isObjectAvailable)(req.body.gu)))
+            if (!((0, otherservices_2.isObjectAvailable)(req.body.gu)))
                 req.body.gu = {};
-            if (!((0, otherservices_1.isObjectAvailable)(req.body.neuro)))
+            if (!((0, otherservices_2.isObjectAvailable)(req.body.neuro)))
                 req.body.neuro = {};
-            if (!((0, otherservices_1.isObjectAvailable)(req.body.msk)))
+            if (!((0, otherservices_2.isObjectAvailable)(req.body.msk)))
                 req.body.msk = {};
-            if (!((0, otherservices_1.isObjectAvailable)(req.body.medicalhistory)))
+            if (!((0, otherservices_2.isObjectAvailable)(req.body.medicalhistory)))
                 req.body.medicalhistory = {};
-            if (!((0, otherservices_1.isObjectAvailable)(req.body.immunizationhistory)))
+            if (!((0, otherservices_2.isObjectAvailable)(req.body.immunizationhistory)))
                 req.body.immunizationhistory = {};
-            if (!((0, otherservices_1.isObjectAvailable)(req.body.developmentmilestonehistorydetails)))
+            if (!((0, otherservices_2.isObjectAvailable)(req.body.developmentmilestonehistorydetails)))
                 req.body.developmentmilestonehistorydetails = {};
-            if (!((0, otherservices_1.isObjectAvailable)(req.body.prepostnatalhistory)))
+            if (!((0, otherservices_2.isObjectAvailable)(req.body.prepostnatalhistory)))
                 req.body.prepostnatalhistory = {};
-            if (!((0, otherservices_1.isObjectAvailable)(req.body.historycvs)))
+            if (!((0, otherservices_2.isObjectAvailable)(req.body.historycvs)))
                 req.body.historycvs = {};
-            if (!((0, otherservices_1.isObjectAvailable)(req.body.historyresp)))
+            if (!((0, otherservices_2.isObjectAvailable)(req.body.historyresp)))
                 req.body.historyresp = {};
-            if (!((0, otherservices_1.isObjectAvailable)(req.body.historygi)))
+            if (!((0, otherservices_2.isObjectAvailable)(req.body.historygi)))
                 req.body.historygi = {};
-            if (!((0, otherservices_1.isObjectAvailable)(req.body.historygu)))
+            if (!((0, otherservices_2.isObjectAvailable)(req.body.historygu)))
                 req.body.historygu = {};
-            if (!((0, otherservices_1.isObjectAvailable)(req.body.historyneuro)))
+            if (!((0, otherservices_2.isObjectAvailable)(req.body.historyneuro)))
                 req.body.historyneuro = {};
-            if (!((0, otherservices_1.isObjectAvailable)(req.body.historymsk)))
+            if (!((0, otherservices_2.isObjectAvailable)(req.body.historymsk)))
                 req.body.historymsk = {};
             const { height, weight, temperature, bloodpressuresystolic, bloodpressurediastolic, respiration, saturation, status, additionalnote } = req.body;
             const { assessment, assessmentnote, diagosis, diagosisnote, icpc2, icpc2note } = req.body;
@@ -1029,7 +1013,7 @@ function addencounter(req, res) {
             //vitals
             const vitals = { height, weight, temperature, bloodpressuresystolic, bloodpressurediastolic, respiration, saturation, bmi: req.body.bmi, status: config_1.default.status[6] };
             if (height || weight) {
-                (0, otherservices_1.validateinputfornumber)({ height, weight });
+                (0, otherservices_2.validateinputfornumber)({ height, weight });
                 req.body.bmi = weight / ((height / 100) * (height / 100));
                 //validateinputfaulsyvalue({...vitals});
             }
