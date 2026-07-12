@@ -88,6 +88,24 @@ var radiologyorder = (req, res) => __awaiter(void 0, void 0, void 0, function* (
                 throw new Error(`Appointment donot ${config_1.default.error.erroralreadyexit}`);
             }
         }
+        // Ensure patient has made a paid Appointment payment today, unless they are currently admitted
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
+        const todayEnd = new Date();
+        todayEnd.setHours(23, 59, 59, 999);
+        const findAdmission = yield (0, admissions_1.readoneadmission)({ patient: id, status: { $ne: config_1.default.admissionstatus[5] } }, {}, '');
+        if (!findAdmission) {
+            // Patient is not admitted — enforce payment check
+            const appointmentPayment = yield (0, payment_1.readonepayment)({
+                patient: id,
+                status: config_1.default.status[3], // 'paid'
+                paymentcategory: config_1.default.category[0], // 'Appointment'
+                createdAt: { $gte: todayStart, $lte: todayEnd }
+            });
+            if (!appointmentPayment) {
+                throw new Error('Patient has not made payment for an appointment today. Radiology order cannot be processed.');
+            }
+        }
         const { servicetypedetails } = yield (0, servicetype_1.readallservicetype)({ category: config_1.default.category[4] }, { type: 1, category: 1, department: 1, _id: 0 });
         console.log(isHMOCover);
         //loop through all test and create record in lab order
