@@ -47,7 +47,29 @@ export var scheduleprocedureorder= async (req:any, res:any) =>{
       
       
       }
-           
+
+      // Ensure patient has made a paid Appointment payment today, unless they are currently admitted
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+      const todayEnd = new Date();
+      todayEnd.setHours(23, 59, 59, 999);
+
+      const findAdmissionForPayment = await readoneadmission({ patient: id, status: { $ne: configuration.admissionstatus[5] } }, {}, '');
+
+      if (!findAdmissionForPayment) {
+        // Patient is not admitted — enforce payment check
+        const appointmentPayment = await readonepayment({
+          patient: id,
+          status: configuration.status[3],            // 'paid'
+          paymentcategory: configuration.category[0],  // 'Appointment'
+          createdAt: { $gte: todayStart, $lte: todayEnd }
+        });
+
+        if (!appointmentPayment) {
+          throw new Error('Patient has not made payment for an appointment today. Procedure order cannot be processed.');
+        }
+      }
+
   //const {servicetypedetails} = await readallservicetype({category: configuration.category[5]},{type:1,category:1,department:1,_id:0});
       //loop through all test and create record in lab order
       for(var i =0; i < procedure.length; i++){
@@ -68,9 +90,9 @@ export var scheduleprocedureorder= async (req:any, res:any) =>{
     let paymentreference;
    
   //search for patient under admission. if the patient is admitted the patient admission number will be use as payment reference
-  var  findAdmission = await readoneadmission({patient:id, status:{$ne: configuration.admissionstatus[5]}},{},'');
-  if(findAdmission){
-    paymentreference = findAdmission.admissionid;
+  //var  findAdmission = await readoneadmission({patient:id, status:{$ne: configuration.admissionstatus[5]}},{},'');
+  if(findAdmissionForPayment){
+    paymentreference = findAdmissionForPayment.admissionid;
 
 }
 else{

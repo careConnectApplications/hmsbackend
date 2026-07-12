@@ -781,6 +781,7 @@ var examinepatient = (req, res) => __awaiter(void 0, void 0, void 0, function* (
 exports.examinepatient = examinepatient;
 //lab order
 var laborder = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
     try {
         //accept _id from request.
         const { id } = req.params;
@@ -797,7 +798,9 @@ var laborder = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         // Create a new ObjectId
         var appointment;
         let patientappointment;
+        let resolvedPatientId;
         if (foundPatient) {
+            resolvedPatientId = foundPatient._id;
             patientappointment = yield (0, appointment_1.readoneappointment)({ _id: appointmentunderscoreid }, {}, 'patient');
             appointment = {
                 patient: id,
@@ -808,13 +811,34 @@ var laborder = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             // isHMOCover = foundPatient.isHMOCover;
         }
         else {
+            // id is an appointment id — resolve patient from appointment
             appointment = yield (0, appointment_1.readoneappointment)({ _id: id }, {}, 'patient');
             if (!appointment) {
                 //create an appointment
                 throw new Error(`Appointment donot ${config_1.default.error.erroralreadyexit}`);
             }
+            resolvedPatientId = ((_a = appointment.patient) === null || _a === void 0 ? void 0 : _a._id) || appointment.patient;
             //update appoint with lab order
             //  isHMOCover = appointment.patient.isHMOCover;
+        }
+        // Ensure patient has made a paid Appointment payment today before lab order can be processed
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
+        const todayEnd = new Date();
+        todayEnd.setHours(23, 59, 59, 999);
+        // Check if patient is currently admitted (not discharged) — bypass payment check for admitted patients
+        const findAdmission = yield (0, admissions_1.readoneadmission)({ patient: resolvedPatientId, status: { $ne: config_1.default.admissionstatus[5] } }, {}, '');
+        if (!findAdmission) {
+            // Patient is not admitted — enforce payment check
+            const appointmentPayment = yield (0, payment_1.readonepayment)({
+                patient: resolvedPatientId,
+                status: config_1.default.status[3], // 'paid'
+                paymentcategory: config_1.default.category[0], // 'Appointment'
+                createdAt: { $gte: todayStart, $lte: todayEnd }
+            });
+            if (!appointmentPayment) {
+                throw new Error('Patient has not made payment for an appointment today. Lab order cannot be processed.');
+            }
         }
         //console.log(testname);
         //const {servicetypedetails} = await readallservicetype({category: configuration.category[2]},{type:1,category:1,department:1,_id:0});

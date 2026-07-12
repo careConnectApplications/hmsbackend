@@ -28,6 +28,7 @@ const price_1 = require("../../dao/price");
 const payment_1 = require("../../dao/payment");
 const procedure_1 = require("../../dao/procedure");
 const servicetype_1 = require("../../dao/servicetype");
+const admissions_1 = require("../../dao/admissions");
 const { ObjectId } = mongoose_1.default.Types;
 //refer for admission
 var refertheatreadmission = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -55,6 +56,24 @@ var refertheatreadmission = (req, res) => __awaiter(void 0, void 0, void 0, func
         var patient = yield (0, patientmanagement_1.readonepatient)({ _id: id, status: config_1.default.status[1] }, {}, '', '');
         if (!patient) {
             throw new Error(`Patient donot ${config_1.default.error.erroralreadyexit} or has not made payment for registration`);
+        }
+        // Ensure patient has made a paid Appointment payment today, unless they are currently admitted
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
+        const todayEnd = new Date();
+        todayEnd.setHours(23, 59, 59, 999);
+        const findAdmissionForPayment = yield (0, admissions_1.readoneadmission)({ patient: patient._id, status: { $ne: config_1.default.admissionstatus[5] } }, {}, '');
+        if (!findAdmissionForPayment) {
+            // Patient is not admitted — enforce payment check
+            const appointmentPayment = yield (0, payment_1.readonepayment)({
+                patient: patient._id,
+                status: config_1.default.status[3], // 'paid'
+                paymentcategory: config_1.default.category[0], // 'Appointment'
+                createdAt: { $gte: todayStart, $lte: todayEnd }
+            });
+            if (!appointmentPayment) {
+                throw new Error('Patient has not made payment for an appointment today. Pharmacy order cannot be processed.');
+            }
         }
         //check that patient have not been admitted
         var findAdmission = yield (0, theatreadmission_1.readonethearteadmission)({ patient: patient._id, status: { $ne: config_1.default.admissionstatus[5] } }, {}, '');

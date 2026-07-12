@@ -6,7 +6,7 @@ import { readonepatient, updatepatient } from "../../dao/patientmanagement";
 import { readallservicetype } from "../../dao/servicetype";
 import { readone } from "../../dao/users";
 import { readoneprice } from "../../dao/price";
-import { createpayment } from "../../dao/payment";
+import { createpayment, readonepayment } from "../../dao/payment";
 import mongoose from 'mongoose';
 //import {createvital} from "../../dao/vitals";
 import { createlab } from "../../dao/lab";
@@ -825,13 +825,18 @@ export var laborder = async (req: any, res: any) => {
 
     //find patient
     const foundPatient: any = await readonepatient({ _id: id }, {}, '', '');
+
+
     // check is patient is under inssurance
     //var isHMOCover;
 
     // Create a new ObjectId
     var appointment: any;
     let patientappointment: any;
+    let resolvedPatientId: any;
+
     if (foundPatient) {
+      resolvedPatientId = foundPatient._id;
       patientappointment = await readoneappointment({ _id: appointmentunderscoreid }, {}, 'patient');
       appointment = {
         patient: id,
@@ -844,15 +849,40 @@ export var laborder = async (req: any, res: any) => {
 
     }
     else {
+      // id is an appointment id — resolve patient from appointment
       appointment = await readoneappointment({ _id: id }, {}, 'patient');
       if (!appointment) {
         //create an appointment
         throw new Error(`Appointment donot ${configuration.error.erroralreadyexit}`);
 
       }
+      resolvedPatientId = appointment.patient?._id || appointment.patient;
       //update appoint with lab order
 
       //  isHMOCover = appointment.patient.isHMOCover;
+    }
+
+    // Ensure patient has made a paid Appointment payment today before lab order can be processed
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const todayEnd = new Date();
+    todayEnd.setHours(23, 59, 59, 999);
+
+    // Check if patient is currently admitted (not discharged) — bypass payment check for admitted patients
+    const findAdmission = await readoneadmission({ patient: resolvedPatientId, status: { $ne: configuration.admissionstatus[5] } }, {}, '');
+
+    if (!findAdmission) {
+      // Patient is not admitted — enforce payment check
+      const appointmentPayment = await readonepayment({
+        patient: resolvedPatientId,
+        status: configuration.status[3],            // 'paid'
+        paymentcategory: configuration.category[0],  // 'Appointment'
+        createdAt: { $gte: todayStart, $lte: todayEnd }
+      });
+
+      if (!appointmentPayment) {
+        throw new Error('Patient has not made payment for an appointment today. Lab order cannot be processed.');
+      }
     }
 
 
