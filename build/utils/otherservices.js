@@ -257,6 +257,12 @@ function validatepayment(patient, servicetype) {
             todayStart.setHours(0, 0, 0, 0);
             const todayEnd = new Date();
             todayEnd.setHours(23, 59, 59, 999);
+            console.log("todayStart", todayStart);
+            console.log("todayEnd", todayEnd);
+            console.log("configuration.category[0]", config_1.default.category[0]);
+            console.log("configuration.category[3]", config_1.default.category[3]);
+            console.log("patient", patient);
+            console.log("configuration.status[3]", config_1.default.status[3]);
             const findAdmissionForPayment = yield (0, admissions_1.readoneadmission)({ patient: patient, status: { $ne: config_1.default.admissionstatus[5] } }, {}, '');
             if (!findAdmissionForPayment) {
                 // Patient is not admitted — enforce payment check
