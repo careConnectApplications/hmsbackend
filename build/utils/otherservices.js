@@ -265,15 +265,23 @@ function validatepayment(patient, servicetype) {
             console.log("configuration.status[3]", config_1.default.status[3]);
             const findAdmissionForPayment = yield (0, admissions_1.readoneadmission)({ patient: patient, status: { $ne: config_1.default.admissionstatus[5] } }, {}, '');
             if (!findAdmissionForPayment) {
-                // Patient is not admitted — enforce payment check
-                const appointmentPayment = yield (0, payment_1.readonepayment)({
-                    patient: patient,
-                    status: config_1.default.status[3], // 'paid'
-                    paymentcategory: { $in: [config_1.default.category[0], config_1.default.category[3]] }, // 'Appointment' 3 or Patient Registration
-                    createdAt: { $gte: todayStart, $lte: todayEnd }
-                });
-                if (!appointmentPayment) {
-                    throw new Error(`Patient has not made payment for an appointment today. ${servicetype} order cannot be processed.`);
+                // Find patient and check patient.isHMOCover == configuration.ishmo[1]
+                const patientId = patient && patient._id ? patient._id : patient;
+                const foundPatient = yield (0, patientmanagement_1.readonepatient)({ _id: patientId }, {}, '', '');
+                if (foundPatient && foundPatient.isHMOCover == config_1.default.ishmo[1]) {
+                    // HMO patient does not need to make payment.
+                }
+                else {
+                    // Patient is not admitted — enforce payment check
+                    const appointmentPayment = yield (0, payment_1.readonepayment)({
+                        patient: patient,
+                        status: config_1.default.status[3], // 'paid'
+                        paymentcategory: { $in: [config_1.default.category[0], config_1.default.category[3]] }, // 'Appointment' 3 or Patient Registration
+                        createdAt: { $gte: todayStart, $lte: todayEnd }
+                    });
+                    if (!appointmentPayment) {
+                        throw new Error(`Patient has not made payment for an appointment today. ${servicetype} order cannot be processed.`);
+                    }
                 }
             }
             return findAdmissionForPayment;
