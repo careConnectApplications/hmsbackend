@@ -234,16 +234,24 @@ export async function validatepayment(patient: any, servicetype: any) {
     const findAdmissionForPayment = await readoneadmission({ patient: patient, status: { $ne: configuration.admissionstatus[5] } }, {}, '');
 
     if (!findAdmissionForPayment) {
-      // Patient is not admitted — enforce payment check
-      const appointmentPayment = await readonepayment({
-        patient: patient,
-        status: configuration.status[3],            // 'paid'
-        paymentcategory: { $in: [configuration.category[0], configuration.category[3]] },  // 'Appointment' 3 or Patient Registration
-        createdAt: { $gte: todayStart, $lte: todayEnd }
-      });
+      // Find patient and check patient.isHMOCover == configuration.ishmo[1]
+      const patientId = patient && patient._id ? patient._id : patient;
+      const foundPatient = await readonepatient({ _id: patientId }, {}, '', '');
+      
+      if (foundPatient && foundPatient.isHMOCover == configuration.ishmo[1]) {
+        // HMO patient does not need to make payment.
+      } else {
+        // Patient is not admitted — enforce payment check
+        const appointmentPayment = await readonepayment({
+          patient: patient,
+          status: configuration.status[3],            // 'paid'
+          paymentcategory: { $in: [configuration.category[0], configuration.category[3]] },  // 'Appointment' 3 or Patient Registration
+          createdAt: { $gte: todayStart, $lte: todayEnd }
+        });
 
-      if (!appointmentPayment) {
-        throw new Error(`Patient has not made payment for an appointment today. ${servicetype} order cannot be processed.`);
+        if (!appointmentPayment) {
+          throw new Error(`Patient has not made payment for an appointment today. ${servicetype} order cannot be processed.`);
+        }
       }
     }
     return findAdmissionForPayment;
