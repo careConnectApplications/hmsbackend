@@ -124,7 +124,7 @@ export async function getalladmissionbypatient(req: any, res: any) {
 //admited,to transfer,transfer,to discharge, discharge
 export async function updateadmissionstatus(req: any, res: any) {
   const { id } = req.params;
-  var { status, transfterto, reason, dischargereason, dischargedate } = req.body;
+  var { status, transfterto, dischargereason, dischargedate } = req.body;
   if (transfterto) {
     transfterto = new ObjectId(transfterto);
   }
@@ -134,7 +134,7 @@ export async function updateadmissionstatus(req: any, res: any) {
       throw new Error(`${status} status doesnt ${configuration.error.erroralreadyexit}`);
 
     // ONLY validate when status is todischarge
-    var reasonValue = dischargereason || reason;
+    var reasonValue = dischargereason;
     var dischargeDateValue = dischargedate ? new Date(dischargedate) : new Date();
 
     if (status == configuration.admissionstatus[4]) {
@@ -142,24 +142,8 @@ export async function updateadmissionstatus(req: any, res: any) {
         throw new Error(`dischargereason ${configuration.error.errorisrequired}`);
       }
 
-      const validOptions = configuration.dischargereasonoptions || [
-        "ABS", "Disch", "Ref", "LAMA",
-        "ABS: Abscond", "Disch:Discharg", "Ref: Referral", "LAMA:Leave Against Medical Advice"
-      ];
-
-      if (!validOptions.includes(reasonValue)) {
+      if (!(configuration.dischargereasons).includes(reasonValue)) {
         throw new Error(`dischargereason ${configuration.error.erroroption}`);
-      }
-
-      const optionMap: { [key: string]: string } = {
-        "ABS": "ABS: Abscond",
-        "Disch": "Disch:Discharg",
-        "Ref": "Ref: Referral",
-        "LAMA": "LAMA:Leave Against Medical Advice"
-      };
-
-      if (optionMap[reasonValue]) {
-        reasonValue = optionMap[reasonValue];
       }
     }
 
