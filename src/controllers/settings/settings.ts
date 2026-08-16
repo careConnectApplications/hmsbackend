@@ -88,8 +88,8 @@ export const settings = async function () {
         //console.log(check2);
         const reports = [
             { querytype: "financialreport", querygroup: ["Appointment", "Lab", "Patient Registration", "Radiology", "Procedure", ...pharmacyNames] },
-            { querytype: "appointmentreport", querygroup: clinicNames },
-            { querytype: "admissionreport", querygroup: wardNames },
+            { querytype: "outpatientregister", querygroup: ["All", ...clinicNames] },
+            { querytype: "inpatientregister", querygroup: ["All", ...wardNames] },
 
             { querytype: "hmolabreport", querygroup: hmoNames },
             { querytype: "hmoreportforprocedure", querygroup: hmoNames },
@@ -98,11 +98,12 @@ export const settings = async function () {
             { querytype: "hmoradiologyreport", querygroup: hmoNames },
 
             { querytype: "secondaryservicereport", querygroup: ["Appointment", "Lab", "Radiology", "Procedure", "All", ...pharmacyNames] },
+            { querytype: "generalattendance", querygroup: ["All", ...clinicNames] }
             // {querytype:"Nutrition",querygroup:[ "Number Of patient Deworked", "Number of Patient Growing Well"]},
 
 
         ];
-        const summary = ["financialaggregate", "cashieraggregate", "appointmentaggregate", "admissionaggregate", "procedureaggregate", "clinicalaggregate", "hmoaggregate", "nutritionaggregate"];
+        const summary = ["financialaggregate", "cashieraggregate", "appointmentaggregate", "admissionaggregate", "procedureaggregate", "clinicalaggregate", "hmoaggregate", "nutritionaggregate", "generalattendanceaggregate"];
         return { reports, summary };
     }
     catch (error: any) {

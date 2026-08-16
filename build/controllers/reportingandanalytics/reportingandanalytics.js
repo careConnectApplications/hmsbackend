@@ -17,6 +17,88 @@ const config_1 = __importDefault(require("../../config"));
 const reports_1 = require("../../dao/reports");
 const payment_1 = require("../../dao/payment");
 const settings_1 = require("../settings/settings");
+const moment_1 = __importDefault(require("moment"));
+function buildGeneralAttendanceTable(appointments) {
+    const counts = {
+        "0-28d": { male: 0, female: 0, total: 0 },
+        "1-11m": { male: 0, female: 0, total: 0 },
+        "1-4y": { male: 0, female: 0, total: 0 },
+        "5-9y": { male: 0, female: 0, total: 0 },
+        "10-19y": { male: 0, female: 0, total: 0 },
+        "20y+": { male: 0, female: 0, total: 0 },
+    };
+    let grandMale = 0;
+    let grandFemale = 0;
+    let grandTotal = 0;
+    appointments.forEach((item) => {
+        const patientObj = item.patient || {};
+        const genderStr = (patientObj.gender || item.gender || "").toString().trim().toLowerCase();
+        const isMale = genderStr.startsWith("m");
+        const isFemale = genderStr.startsWith("f");
+        const appDate = item.appointmentdate ? (0, moment_1.default)(item.appointmentdate) : (0, moment_1.default)();
+        const dob = patientObj.dateOfBirth || item.dateOfBirth;
+        let ageInDays = null;
+        let ageInMonths = null;
+        let ageInYears = null;
+        if (dob) {
+            const dobMoment = (0, moment_1.default)(dob, ["YYYY-MM-DD", "DD/MM/YYYY", "YYYY/MM/DD", moment_1.default.ISO_8601]);
+            if (dobMoment.isValid()) {
+                ageInDays = appDate.diff(dobMoment, "days");
+                ageInMonths = appDate.diff(dobMoment, "months");
+                ageInYears = appDate.diff(dobMoment, "years");
+            }
+        }
+        if (ageInYears === null && (patientObj.age || item.age)) {
+            const parsedAge = parseInt((patientObj.age || item.age).toString(), 10);
+            if (!isNaN(parsedAge)) {
+                ageInYears = parsedAge;
+            }
+        }
+        let catKey = "";
+        if (ageInDays !== null && ageInDays >= 0 && ageInDays <= 28) {
+            catKey = "0-28d";
+        }
+        else if (ageInMonths !== null && ageInMonths >= 0 && ageInMonths <= 11) {
+            catKey = "1-11m";
+        }
+        else if (ageInYears !== null) {
+            if (ageInYears >= 1 && ageInYears <= 4) {
+                catKey = "1-4y";
+            }
+            else if (ageInYears >= 5 && ageInYears <= 9) {
+                catKey = "5-9y";
+            }
+            else if (ageInYears >= 10 && ageInYears <= 19) {
+                catKey = "10-19y";
+            }
+            else if (ageInYears >= 20) {
+                catKey = "20y+";
+            }
+        }
+        if (catKey && counts[catKey]) {
+            if (isMale) {
+                counts[catKey].male++;
+                grandMale++;
+            }
+            else if (isFemale) {
+                counts[catKey].female++;
+                grandFemale++;
+            }
+            counts[catKey].total++;
+            grandTotal++;
+        }
+    });
+    const table = [
+        { ageGroup: "0-28d", M: counts["0-28d"].male, F: counts["0-28d"].female, male: counts["0-28d"].male, female: counts["0-28d"].female, total: counts["0-28d"].total, TOTAL: counts["0-28d"].total },
+        { ageGroup: "1-11m", M: counts["1-11m"].male, F: counts["1-11m"].female, male: counts["1-11m"].male, female: counts["1-11m"].female, total: counts["1-11m"].total, TOTAL: counts["1-11m"].total },
+        { ageGroup: "1-4y", M: counts["1-4y"].male, F: counts["1-4y"].female, male: counts["1-4y"].male, female: counts["1-4y"].female, total: counts["1-4y"].total, TOTAL: counts["1-4y"].total },
+        { ageGroup: "5-9y", M: counts["5-9y"].male, F: counts["5-9y"].female, male: counts["5-9y"].male, female: counts["5-9y"].female, total: counts["5-9y"].total, TOTAL: counts["5-9y"].total },
+        { ageGroup: "10-19y", M: counts["10-19y"].male, F: counts["10-19y"].female, male: counts["10-19y"].male, female: counts["10-19y"].female, total: counts["10-19y"].total, TOTAL: counts["10-19y"].total },
+        { ageGroup: "20y+", M: counts["20y+"].male, F: counts["20y+"].female, male: counts["20y+"].male, female: counts["20y+"].female, total: counts["20y+"].total, TOTAL: counts["20y+"].total },
+        { ageGroup: "TOTAL", M: grandMale, F: grandFemale, male: grandMale, female: grandFemale, total: grandTotal, TOTAL: grandTotal }
+    ];
+    return table;
+}
 const reports = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         //paymentcategory
@@ -66,6 +148,7 @@ const reports = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             default: null,
           },
         */
+        const wardMatch = (querygroup && querygroup !== "All") ? { "referedward.wardname": querygroup } : {};
         const reportbyadmissionreport = [
             {
                 $lookup: {
@@ -74,6 +157,12 @@ const reports = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                     foreignField: "_id",
                     as: "patient",
                 },
+            },
+            {
+                $unwind: {
+                    path: "$patient",
+                    preserveNullAndEmptyArrays: true
+                }
             },
             {
                 $lookup: {
@@ -90,9 +179,39 @@ const reports = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 }
             },
             {
-                $match: { $and: [{ "referedward.wardname": querygroup }, { referddate: { $gt: startdate, $lt: enddate } }] }
+                $match: {
+                    $and: [
+                        wardMatch,
+                        { referddate: { $gte: startdate, $lte: enddate } }
+                    ]
+                }
             },
+            {
+                $project: {
+                    wardName: { $ifNull: ["$referedward.wardname", "Unassigned Ward"] },
+                    referddate: 1,
+                    patientSurname: "$patient.lastName",
+                    patientFirstName: "$patient.firstName",
+                    patientNumber: "$patient.MRN",
+                    sex: "$patient.gender",
+                    age: "$patient.age",
+                    alldiagnosis: 1,
+                    dischargereason: 1,
+                    dischargedate: 1,
+                    status: 1,
+                    patient: 1,
+                    referedward: 1,
+                    doctorname: 1,
+                    staffname: 1,
+                    admissionid: 1,
+                    admittospecialization: 1
+                }
+            },
+            {
+                $sort: { wardName: 1, referddate: 1 }
+            }
         ];
+        const clinicMatch = (querygroup && querygroup !== "All") ? { clinic: querygroup } : {};
         const reportbyappointmentreport = [
             {
                 $lookup: {
@@ -103,10 +222,30 @@ const reports = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 },
             },
             {
-                $match: { $and: [{ clinic: querygroup }, {
-                            appointmentdate: { $gt: startdate, $lt: enddate }
-                        }] }
+                $unwind: {
+                    path: "$patient",
+                    preserveNullAndEmptyArrays: true
+                }
             },
+            {
+                $lookup: {
+                    from: "labs",
+                    localField: "lab",
+                    foreignField: "_id",
+                    as: "labDetails",
+                },
+            },
+            {
+                $match: {
+                    $and: [
+                        clinicMatch,
+                        { appointmentdate: { $gte: startdate, $lte: enddate } }
+                    ]
+                }
+            },
+            {
+                $sort: { appointmentdate: 1 }
+            }
         ];
         const reportbyhmoreport = [
             {
@@ -124,9 +263,11 @@ const reports = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 }
             },
             {
-                $match: { $and: [{ "patient.HMOName": querygroup }, {
+                $match: {
+                    $and: [{ "patient.HMOName": querygroup }, {
                             createdAt: { $gt: startdate, $lt: enddate }
-                        }] }
+                        }]
+                }
             },
         ];
         const appointmentreportbyhmoreport = [
@@ -145,9 +286,11 @@ const reports = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 }
             },
             {
-                $match: { $and: [{ "patient.HMOName": querygroup }, {
+                $match: {
+                    $and: [{ "patient.HMOName": querygroup }, {
                             appointmentdate: { $gt: startdate, $lt: enddate }
-                        }] }
+                        }]
+                }
             },
         ];
         const secondaryservice = [
@@ -266,11 +409,81 @@ const reports = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         if (querytype == reports[0].querytype) {
             queryresult = yield (0, reports_1.readpaymentaggregate)(reportbyfinancialreport);
         }
-        else if (querytype == reports[1].querytype) {
-            queryresult = yield (0, reports_1.readappointmentaggregate)(reportbyappointmentreport);
+        else if (querytype == reports[1].querytype || querytype == "outpatientregister" || querytype == "outpatient register" || querytype == "appointmentreport") {
+            const rawAppointments = yield (0, reports_1.readappointmentaggregate)(reportbyappointmentreport);
+            queryresult = rawAppointments.map((item, index) => {
+                var _a, _b, _c, _d, _e, _f, _g, _h;
+                const patientObj = item.patient || {};
+                const surname = patientObj.lastName || item.lastName || '';
+                const firstname = patientObj.firstName || item.firstName || '';
+                const fullName = `${surname} ${firstname}`.trim();
+                const attendanceType = item.appointmenttype || "";
+                let complaint = "";
+                if (((_a = item.clinicalencounter) === null || _a === void 0 ? void 0 : _a.clinicalnote) && Array.isArray(item.clinicalencounter.clinicalnote) && item.clinicalencounter.clinicalnote.length > 0) {
+                    complaint = item.clinicalencounter.clinicalnote.filter(Boolean).join(", ");
+                }
+                if (!complaint) {
+                    complaint = ((_c = (_b = item.encounter) === null || _b === void 0 ? void 0 : _b.history) === null || _c === void 0 ? void 0 : _c.presentingcomplaints)
+                        || item.reason
+                        || ((_d = item.encounter) === null || _d === void 0 ? void 0 : _d.presentingcomplaint)
+                        || "";
+                }
+                let diagnosisStr = "";
+                if (((_e = item.clinicalencounter) === null || _e === void 0 ? void 0 : _e.diagnosisicd10) && Array.isArray(item.clinicalencounter.diagnosisicd10) && item.clinicalencounter.diagnosisicd10.length > 0) {
+                    diagnosisStr = item.clinicalencounter.diagnosisicd10.filter(Boolean).join(", ");
+                }
+                if (!diagnosisStr && item.diagnosis) {
+                    diagnosisStr = item.diagnosis;
+                }
+                if (!diagnosisStr && ((_g = (_f = item.encounter) === null || _f === void 0 ? void 0 : _f.assessmentdiagnosis) === null || _g === void 0 ? void 0 : _g.diagosis)) {
+                    diagnosisStr = item.encounter.assessmentdiagnosis.diagosis;
+                }
+                if (!diagnosisStr && ((_h = item.clinicalencounter) === null || _h === void 0 ? void 0 : _h.diagnosisnote) && Array.isArray(item.clinicalencounter.diagnosisnote) && item.clinicalencounter.diagnosisnote.length > 0) {
+                    diagnosisStr = item.clinicalencounter.diagnosisnote.filter(Boolean).join(", ");
+                }
+                let labStr = "";
+                const labResultsArray = [];
+                if (item.labDetails && Array.isArray(item.labDetails) && item.labDetails.length > 0) {
+                    const resultsList = [];
+                    item.labDetails.forEach((lab) => {
+                        if (lab.testresult && Array.isArray(lab.testresult) && lab.testresult.length > 0) {
+                            lab.testresult.forEach((tr) => {
+                                if (tr && tr.result) {
+                                    const entry = {
+                                        subcomponent: tr.subcomponent || "",
+                                        result: tr.result,
+                                        formatted: tr.subcomponent ? `${tr.subcomponent}: ${tr.result}` : tr.result
+                                    };
+                                    labResultsArray.push(entry);
+                                    resultsList.push(entry.formatted);
+                                }
+                            });
+                        }
+                    });
+                    if (resultsList.length > 0) {
+                        labStr = resultsList.join(", ");
+                    }
+                }
+                return Object.assign(Object.assign({}, item), { patient: patientObj, sn: index + 1, date: item.appointmentdate, nameOfPt: fullName, patientName: fullName, ptNumber: patientObj.MRN || item.MRN || "", patientNumber: patientObj.MRN || item.MRN || "", sex: patientObj.gender || "", age: patientObj.age || "", typeOfAttendance: attendanceType, presentingComplaint: complaint, diagnosis: diagnosisStr, labinvestigation: labStr, labResults: labResultsArray });
+            });
         }
-        else if (querytype == reports[2].querytype) {
-            queryresult = yield (0, reports_1.readadmissionaggregate)(reportbyadmissionreport);
+        else if (querytype == reports[2].querytype || querytype == "inpatientregister" || querytype == "inpatient register" || querytype == "admissionreport") {
+            const rawAdmissions = yield (0, reports_1.readadmissionaggregate)(reportbyadmissionreport);
+            queryresult = rawAdmissions.map((item, index) => {
+                const diagnosisList = item.alldiagnosis && Array.isArray(item.alldiagnosis)
+                    ? item.alldiagnosis.map((d) => d.diagnosis || d.note).filter(Boolean).join(", ")
+                    : "";
+                const reason = (item.dischargereason || "").toUpperCase();
+                const dischargeDateStr = item.dischargedate ? item.dischargedate : null;
+                const patientObj = item.patient || {};
+                return Object.assign(Object.assign({}, item), { patient: patientObj, sn: index + 1, wardName: item.wardName || "Unassigned Ward", dateOfAdmission: item.referddate, patientName: `${patientObj.lastName || item.patientSurname || ''} ${patientObj.firstName || item.patientFirstName || ''}`.trim(), patientNumber: patientObj.MRN || item.patientNumber || "", sex: patientObj.gender || item.sex || "", age: patientObj.age || item.age || "", diagnosis: diagnosisList, admissionOutcome: {
+                        abs: reason.includes("ABS") ? dischargeDateStr : null,
+                        disch: reason.includes("DISCH") ? dischargeDateStr : null,
+                        ref: reason.includes("REF") ? dischargeDateStr : null,
+                        lama: reason.includes("LAMA") ? dischargeDateStr : null,
+                        death: (reason.includes("DEATH") || reason.includes("DEAD")) ? dischargeDateStr : null
+                    } });
+            });
         }
         else if (querytype == reports[3].querytype) {
             queryresult = yield (0, reports_1.readlabaggregate)(reportbyhmoreport);
@@ -323,6 +536,28 @@ const reports = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         else if (querytype == reports[8].querytype) {
             //querygroup:[ "Appointment", "Lab","Patient Registration","Radiology","Procedure",...pharmacyNames]
             queryresult = yield (0, reports_1.readprescriptionaggregate)(pharmacysecondaryservice);
+        }
+        else if (querytype == "generalattendance" || querytype == "general attendance" || querytype == "generalattendanceaggregate" || (reports[9] && querytype == reports[9].querytype)) {
+            const rawAppointments = yield (0, reports_1.readappointmentaggregate)(reportbyappointmentreport);
+            const table = buildGeneralAttendanceTable(rawAppointments);
+            const byUnit = {};
+            if (!querygroup || querygroup === "All") {
+                const grouped = {};
+                rawAppointments.forEach((item) => {
+                    const unit = item.clinic || "Unassigned";
+                    if (!grouped[unit])
+                        grouped[unit] = [];
+                    grouped[unit].push(item);
+                });
+                Object.keys(grouped).forEach((unit) => {
+                    byUnit[unit] = buildGeneralAttendanceTable(grouped[unit]);
+                });
+            }
+            queryresult = Object.assign(table, {
+                unit: querygroup || "All",
+                table: table,
+                byUnit: byUnit
+            });
         }
         else {
             throw new Error(`querytype ${config_1.default.error.errorisrequired}`);
@@ -529,9 +764,11 @@ const reportsummary = (req, res) => __awaiter(void 0, void 0, void 0, function* 
         //5 , 6 ,9
         const appointmentaggregatescheduled = [
             {
-                $match: { $and: [{ status: config_1.default.status[5] }, {
+                $match: {
+                    $and: [{ status: config_1.default.status[5] }, {
                             appointmentdate: { $gt: startdate, $lt: enddate }
-                        }] }
+                        }]
+                }
             },
             {
                 $group: {
@@ -550,9 +787,11 @@ const reportsummary = (req, res) => __awaiter(void 0, void 0, void 0, function* 
         ];
         const appointmentaggregatecomplete = [
             {
-                $match: { $and: [{ status: config_1.default.status[6] }, {
+                $match: {
+                    $and: [{ status: config_1.default.status[6] }, {
                             appointmentdate: { $gt: startdate, $lt: enddate }
-                        }] }
+                        }]
+                }
             },
             {
                 $group: {
@@ -571,9 +810,11 @@ const reportsummary = (req, res) => __awaiter(void 0, void 0, void 0, function* 
         ];
         const appointmentaggregateinprogress = [
             {
-                $match: { $and: [{ status: config_1.default.status[9] }, {
+                $match: {
+                    $and: [{ status: config_1.default.status[9] }, {
                             appointmentdate: { $gt: startdate, $lt: enddate }
-                        }] }
+                        }]
+                }
             },
             {
                 $group: {
@@ -830,7 +1071,8 @@ const reportsummary = (req, res) => __awaiter(void 0, void 0, void 0, function* 
                 }
             },
             {
-                $match: { $and: [
+                $match: {
+                    $and: [
                         {
                             "patient.isHMOCover": config_1.default.ishmo[1]
                         },
@@ -870,7 +1112,8 @@ const reportsummary = (req, res) => __awaiter(void 0, void 0, void 0, function* 
                 }
             },
             {
-                $match: { $and: [
+                $match: {
+                    $and: [
                         {
                             "patient.isHMOCover": config_1.default.ishmo[1]
                         },
@@ -1130,6 +1373,31 @@ const reportsummary = (req, res) => __awaiter(void 0, void 0, void 0, function* 
                 (0, reports_1.readnutritionaggregate)(nutritionaggregatechildren12to59receiveddeworming)
             ]);
             queryresult = { children0to59thatreceivednutirtion, children0to59growingwell, children0to5exclusivebreadstfeeding, children0to59givenvitaminasupplement, children12to59receiveddeworming };
+        }
+        else if (querytype == summary[8] || querytype == "generalattendance" || querytype == "generalattendanceaggregate" || querytype == "general attendance") {
+            const generalAttendanceMatch = [
+                {
+                    $lookup: {
+                        from: "patientsmanagements",
+                        localField: "patient",
+                        foreignField: "_id",
+                        as: "patient",
+                    },
+                },
+                {
+                    $unwind: {
+                        path: "$patient",
+                        preserveNullAndEmptyArrays: true
+                    }
+                },
+                {
+                    $match: {
+                        appointmentdate: { $gte: startdate, $lte: enddate }
+                    }
+                }
+            ];
+            const rawAppointments = yield (0, reports_1.readappointmentaggregate)(generalAttendanceMatch);
+            queryresult = buildGeneralAttendanceTable(rawAppointments);
         }
         else {
             throw new Error(`querytype ${config_1.default.error.errorisrequired}`);

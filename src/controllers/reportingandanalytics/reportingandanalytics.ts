@@ -3,6 +3,94 @@ import configuration from "../../config";
 import { readpaymentaggregate, readappointmentaggregate, readadmissionaggregate, readprocedureaggregate, readradiologyaggregate, readlabaggregate, readprescriptionaggregate, readpatientsmanagementaggregate, readnutritionaggregate } from "../../dao/reports";
 import { readallpayment } from "../../dao/payment";
 import { settings } from "../settings/settings";
+import moment from "moment";
+
+function buildGeneralAttendanceTable(appointments: any[]) {
+  const counts: Record<string, { male: number; female: number; total: number }> = {
+    "0-28d": { male: 0, female: 0, total: 0 },
+    "1-11m": { male: 0, female: 0, total: 0 },
+    "1-4y": { male: 0, female: 0, total: 0 },
+    "5-9y": { male: 0, female: 0, total: 0 },
+    "10-19y": { male: 0, female: 0, total: 0 },
+    "20y+": { male: 0, female: 0, total: 0 },
+  };
+
+  let grandMale = 0;
+  let grandFemale = 0;
+  let grandTotal = 0;
+
+  appointments.forEach((item: any) => {
+    const patientObj = item.patient || {};
+    const genderStr = (patientObj.gender || item.gender || "").toString().trim().toLowerCase();
+    const isMale = genderStr.startsWith("m");
+    const isFemale = genderStr.startsWith("f");
+
+    const appDate = item.appointmentdate ? moment(item.appointmentdate) : moment();
+    const dob = patientObj.dateOfBirth || item.dateOfBirth;
+
+    let ageInDays: number | null = null;
+    let ageInMonths: number | null = null;
+    let ageInYears: number | null = null;
+
+    if (dob) {
+      const dobMoment = moment(dob, ["YYYY-MM-DD", "DD/MM/YYYY", "YYYY/MM/DD", moment.ISO_8601]);
+      if (dobMoment.isValid()) {
+        ageInDays = appDate.diff(dobMoment, "days");
+        ageInMonths = appDate.diff(dobMoment, "months");
+        ageInYears = appDate.diff(dobMoment, "years");
+      }
+    }
+
+    if (ageInYears === null && (patientObj.age || item.age)) {
+      const parsedAge = parseInt((patientObj.age || item.age).toString(), 10);
+      if (!isNaN(parsedAge)) {
+        ageInYears = parsedAge;
+      }
+    }
+
+    let catKey = "";
+    if (ageInDays !== null && ageInDays >= 0 && ageInDays <= 28) {
+      catKey = "0-28d";
+    } else if (ageInMonths !== null && ageInMonths >= 0 && ageInMonths <= 11) {
+      catKey = "1-11m";
+    } else if (ageInYears !== null) {
+      if (ageInYears >= 1 && ageInYears <= 4) {
+        catKey = "1-4y";
+      } else if (ageInYears >= 5 && ageInYears <= 9) {
+        catKey = "5-9y";
+      } else if (ageInYears >= 10 && ageInYears <= 19) {
+        catKey = "10-19y";
+      } else if (ageInYears >= 20) {
+        catKey = "20y+";
+      }
+    }
+
+    if (catKey && counts[catKey]) {
+      if (isMale) {
+        counts[catKey].male++;
+        grandMale++;
+      } else if (isFemale) {
+        counts[catKey].female++;
+        grandFemale++;
+      }
+      counts[catKey].total++;
+      grandTotal++;
+    }
+  });
+
+  const table = [
+    { ageGroup: "0-28d", M: counts["0-28d"].male, F: counts["0-28d"].female, male: counts["0-28d"].male, female: counts["0-28d"].female, total: counts["0-28d"].total, TOTAL: counts["0-28d"].total },
+    { ageGroup: "1-11m", M: counts["1-11m"].male, F: counts["1-11m"].female, male: counts["1-11m"].male, female: counts["1-11m"].female, total: counts["1-11m"].total, TOTAL: counts["1-11m"].total },
+    { ageGroup: "1-4y", M: counts["1-4y"].male, F: counts["1-4y"].female, male: counts["1-4y"].male, female: counts["1-4y"].female, total: counts["1-4y"].total, TOTAL: counts["1-4y"].total },
+    { ageGroup: "5-9y", M: counts["5-9y"].male, F: counts["5-9y"].female, male: counts["5-9y"].male, female: counts["5-9y"].female, total: counts["5-9y"].total, TOTAL: counts["5-9y"].total },
+    { ageGroup: "10-19y", M: counts["10-19y"].male, F: counts["10-19y"].female, male: counts["10-19y"].male, female: counts["10-19y"].female, total: counts["10-19y"].total, TOTAL: counts["10-19y"].total },
+    { ageGroup: "20y+", M: counts["20y+"].male, F: counts["20y+"].female, male: counts["20y+"].male, female: counts["20y+"].female, total: counts["20y+"].total, TOTAL: counts["20y+"].total },
+    { ageGroup: "TOTAL", M: grandMale, F: grandFemale, male: grandMale, female: grandFemale, total: grandTotal, TOTAL: grandTotal }
+  ];
+
+  return table;
+}
+
 export const reports = async (req: any, res: any) => {
   try {
 
@@ -350,7 +438,7 @@ export const reports = async (req: any, res: any) => {
 
       queryresult = await readpaymentaggregate(reportbyfinancialreport);
     }
-    else if (querytype == reports[1].querytype) {
+    else if (querytype == reports[1].querytype || querytype == "outpatientregister" || querytype == "outpatient register" || querytype == "appointmentreport") {
       const rawAppointments: any = await readappointmentaggregate(reportbyappointmentreport);
 
       queryresult = rawAppointments.map((item: any, index: number) => {
@@ -359,7 +447,7 @@ export const reports = async (req: any, res: any) => {
         const firstname = patientObj.firstName || item.firstName || '';
         const fullName = `${surname} ${firstname}`.trim();
 
-        const attendanceType = item.appointmentcategory || item.appointmenttype || "New";
+        const attendanceType = item.appointmenttype || "";
 
         let complaint = "";
         if (item.clinicalencounter?.clinicalnote && Array.isArray(item.clinicalencounter.clinicalnote) && item.clinicalencounter.clinicalnote.length > 0) {
@@ -429,7 +517,7 @@ export const reports = async (req: any, res: any) => {
         };
       });
     }
-    else if (querytype == reports[2].querytype) {
+    else if (querytype == reports[2].querytype || querytype == "inpatientregister" || querytype == "inpatient register" || querytype == "admissionreport") {
       const rawAdmissions: any = await readadmissionaggregate(reportbyadmissionreport);
 
       queryresult = rawAdmissions.map((item: any, index: number) => {
@@ -528,6 +616,30 @@ export const reports = async (req: any, res: any) => {
       //querygroup:[ "Appointment", "Lab","Patient Registration","Radiology","Procedure",...pharmacyNames]
       queryresult = await readprescriptionaggregate(pharmacysecondaryservice);
 
+    }
+    else if (querytype == "generalattendance" || querytype == "general attendance" || querytype == "generalattendanceaggregate" || (reports[9] && querytype == reports[9].querytype)) {
+      const rawAppointments: any = await readappointmentaggregate(reportbyappointmentreport);
+
+      const table = buildGeneralAttendanceTable(rawAppointments);
+      const byUnit: Record<string, any[]> = {};
+
+      if (!querygroup || querygroup === "All") {
+        const grouped: Record<string, any[]> = {};
+        rawAppointments.forEach((item: any) => {
+          const unit = item.clinic || "Unassigned";
+          if (!grouped[unit]) grouped[unit] = [];
+          grouped[unit].push(item);
+        });
+        Object.keys(grouped).forEach((unit) => {
+          byUnit[unit] = buildGeneralAttendanceTable(grouped[unit]);
+        });
+      }
+
+      queryresult = Object.assign(table, {
+        unit: querygroup || "All",
+        table: table,
+        byUnit: byUnit
+      });
     }
     else {
       throw new Error(`querytype ${configuration.error.errorisrequired}`);
@@ -1502,10 +1614,31 @@ export const reportsummary = async (req: any, res: any) => {
       ]);
       queryresult = { children0to59thatreceivednutirtion, children0to59growingwell, children0to5exclusivebreadstfeeding, children0to59givenvitaminasupplement, children12to59receiveddeworming };
 
-
-
-
-
+    }
+    else if (querytype == summary[8] || querytype == "generalattendance" || querytype == "generalattendanceaggregate" || querytype == "general attendance") {
+      const generalAttendanceMatch = [
+        {
+          $lookup: {
+            from: "patientsmanagements",
+            localField: "patient",
+            foreignField: "_id",
+            as: "patient",
+          },
+        },
+        {
+          $unwind: {
+            path: "$patient",
+            preserveNullAndEmptyArrays: true
+          }
+        },
+        {
+          $match: {
+            appointmentdate: { $gte: startdate, $lte: enddate }
+          }
+        }
+      ];
+      const rawAppointments: any = await readappointmentaggregate(generalAttendanceMatch);
+      queryresult = buildGeneralAttendanceTable(rawAppointments);
     }
     else {
       throw new Error(`querytype ${configuration.error.errorisrequired}`);
