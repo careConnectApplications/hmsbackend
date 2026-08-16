@@ -116,7 +116,16 @@ const reports = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             startdate = new Date(startdate);
             enddate = new Date(enddate);
         }
+        const financialMatch = (querygroup && querygroup !== "All") ? { paymentcategory: querygroup } : {};
         const reportbyfinancialreport = [
+            {
+                $match: {
+                    $and: [
+                        financialMatch,
+                        { updatedAt: { $gt: startdate, $lt: enddate } }
+                    ]
+                }
+            },
             {
                 $lookup: {
                     from: "patientsmanagements",
@@ -124,9 +133,6 @@ const reports = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                     foreignField: "_id",
                     as: "patient",
                 },
-            },
-            {
-                $match: { $and: [{ paymentcategory: querygroup }, { updatedAt: { $gt: startdate, $lt: enddate } }] }
             }
         ];
         //admission
@@ -150,6 +156,11 @@ const reports = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         */
         const wardMatch = (querygroup && querygroup !== "All") ? { "referedward.wardname": querygroup } : {};
         const reportbyadmissionreport = [
+            {
+                $match: {
+                    referddate: { $gte: startdate, $lte: enddate }
+                }
+            },
             {
                 $lookup: {
                     from: "patientsmanagements",
@@ -179,12 +190,7 @@ const reports = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 }
             },
             {
-                $match: {
-                    $and: [
-                        wardMatch,
-                        { referddate: { $gte: startdate, $lte: enddate } }
-                    ]
-                }
+                $match: wardMatch
             },
             {
                 $project: {
@@ -214,6 +220,17 @@ const reports = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         const clinicMatch = (querygroup && querygroup !== "All") ? { clinic: querygroup } : {};
         const reportbyappointmentreport = [
             {
+                $match: {
+                    $and: [
+                        clinicMatch,
+                        { appointmentdate: { $gte: startdate, $lte: enddate } }
+                    ]
+                }
+            },
+            {
+                $sort: { appointmentdate: 1 }
+            },
+            {
                 $lookup: {
                     from: "patientsmanagements",
                     localField: "patient",
@@ -234,17 +251,6 @@ const reports = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                     foreignField: "_id",
                     as: "labDetails",
                 },
-            },
-            {
-                $match: {
-                    $and: [
-                        clinicMatch,
-                        { appointmentdate: { $gte: startdate, $lte: enddate } }
-                    ]
-                }
-            },
-            {
-                $sort: { appointmentdate: 1 }
             }
         ];
         const reportbyhmoreport = [

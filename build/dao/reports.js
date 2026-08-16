@@ -40,7 +40,7 @@ const config_1 = __importDefault(require("../config"));
 function readpatientsmanagementaggregate(input) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            return yield patientmanagement_1.default.aggregate(input);
+            return yield patientmanagement_1.default.aggregate(input).allowDiskUse(true);
         }
         catch (e) {
             console.log(e);
@@ -51,7 +51,7 @@ function readpatientsmanagementaggregate(input) {
 function readpaymentaggregate(input) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            return yield payment_1.default.aggregate(input);
+            return yield payment_1.default.aggregate(input).allowDiskUse(true);
         }
         catch (e) {
             console.log(e);
@@ -62,7 +62,7 @@ function readpaymentaggregate(input) {
 function readhmoaggregate(input) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            return yield hmomanagement_1.default.aggregate(input);
+            return yield hmomanagement_1.default.aggregate(input).allowDiskUse(true);
         }
         catch (e) {
             console.log(e);
@@ -73,7 +73,7 @@ function readhmoaggregate(input) {
 function readappointmentaggregate(input) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            return yield appointment_1.default.aggregate(input);
+            return yield appointment_1.default.aggregate(input).allowDiskUse(true);
         }
         catch (e) {
             console.log(e);
@@ -84,7 +84,7 @@ function readappointmentaggregate(input) {
 function readadmissionaggregate(input) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            return yield admission_1.default.aggregate(input);
+            return yield admission_1.default.aggregate(input).allowDiskUse(true);
         }
         catch (e) {
             console.log(e);
@@ -95,7 +95,7 @@ function readadmissionaggregate(input) {
 function readclinicaggregate(input) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            return yield clinics_1.default.aggregate(input);
+            return yield clinics_1.default.aggregate(input).allowDiskUse(true);
         }
         catch (e) {
             console.log(e.message);
@@ -106,7 +106,7 @@ function readclinicaggregate(input) {
 function readwardaggregate(input) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            return yield wardmanagement_1.default.aggregate(input);
+            return yield wardmanagement_1.default.aggregate(input).allowDiskUse(true);
         }
         catch (e) {
             console.log(e);
@@ -117,7 +117,7 @@ function readwardaggregate(input) {
 function readprocedureaggregate(input) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            return yield procedure_1.default.aggregate(input);
+            return yield procedure_1.default.aggregate(input).allowDiskUse(true);
         }
         catch (e) {
             console.log(e);
@@ -129,7 +129,7 @@ function readprocedureaggregate(input) {
 function readlabaggregate(input) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            return yield lab_1.default.aggregate(input);
+            return yield lab_1.default.aggregate(input).allowDiskUse(true);
         }
         catch (e) {
             console.log(e);
@@ -141,7 +141,7 @@ function readlabaggregate(input) {
 function readradiologyaggregate(input) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            return yield radiology_1.default.aggregate(input);
+            return yield radiology_1.default.aggregate(input).allowDiskUse(true);
         }
         catch (e) {
             console.log(e);
@@ -153,7 +153,7 @@ function readradiologyaggregate(input) {
 function readprescriptionaggregate(input) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            return yield prescription_1.default.aggregate(input);
+            return yield prescription_1.default.aggregate(input).allowDiskUse(true);
         }
         catch (e) {
             console.log(e);
@@ -165,7 +165,7 @@ function readprescriptionaggregate(input) {
 function readnutritionaggregate(input) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            return yield nutrition_1.default.aggregate(input);
+            return yield nutrition_1.default.aggregate(input).allowDiskUse(true);
         }
         catch (e) {
             console.log(e);

@@ -59,6 +59,12 @@ const admissionSchema = new mongoose_1.Schema({
         required: true
     }
 }, { timestamps: true });
+admissionSchema.index({ referddate: -1 });
+admissionSchema.index({ patient: 1 });
+admissionSchema.index({ referedward: 1 });
+admissionSchema.index({ status: 1 });
+admissionSchema.index({ referedward: 1, referddate: -1 });
+admissionSchema.index({ createdAt: -1 });
 const admission = (0, mongoose_1.model)('Admission', admissionSchema);
 exports.default = admission;
 /*
