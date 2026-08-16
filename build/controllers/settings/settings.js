@@ -90,7 +90,7 @@ const settings = function () {
             console.log(hmoNames);
             //console.log(check2);
             const reports = [
-                { querytype: "financialreport", querygroup: ["Appointment", "Lab", "Patient Registration", "Radiology", "Procedure", ...pharmacyNames] },
+                { querytype: "financialreport", querygroup: ["All", "Appointment", "Lab", "Patient Registration", "Radiology", "Procedure", ...pharmacyNames] },
                 { querytype: "outpatientregister", querygroup: ["All", ...clinicNames] },
                 { querytype: "inpatientregister", querygroup: ["All", ...wardNames] },
                 { querytype: "hmolabreport", querygroup: hmoNames },

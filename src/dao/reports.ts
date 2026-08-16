@@ -13,7 +13,7 @@ import Nutrition from "../models/nutrition";
 import configuration from "../config";
 export async function readpatientsmanagementaggregate(input:any) {
   try{
-  return await Patientsmanagement.aggregate(input);
+  return await Patientsmanagement.aggregate(input).allowDiskUse(true);
   }
   catch(e:any){
     console.log(e);
@@ -22,7 +22,7 @@ export async function readpatientsmanagementaggregate(input:any) {
   }
 export async function readpaymentaggregate(input:any) {
     try{
-    return await Payment.aggregate(input);
+    return await Payment.aggregate(input).allowDiskUse(true);
     }
     catch(e:any){
       console.log(e);
@@ -32,7 +32,7 @@ export async function readpaymentaggregate(input:any) {
 
     export async function readhmoaggregate(input:any) {
       try{
-      return await Hmomanagement.aggregate(input);
+      return await Hmomanagement.aggregate(input).allowDiskUse(true);
       }
       catch(e:any){
         console.log(e);
@@ -43,7 +43,7 @@ export async function readpaymentaggregate(input:any) {
 
     export async function readappointmentaggregate(input:any) {
         try{
-        return await Appointment.aggregate(input);
+        return await Appointment.aggregate(input).allowDiskUse(true);
         }
         catch(e:any){
           console.log(e);
@@ -52,7 +52,7 @@ export async function readpaymentaggregate(input:any) {
         }
         export async function readadmissionaggregate(input:any) {
             try{
-            return await Admission.aggregate(input);
+            return await Admission.aggregate(input).allowDiskUse(true);
             }
             catch(e:any){
               console.log(e);
@@ -63,7 +63,7 @@ export async function readpaymentaggregate(input:any) {
 
     export async function readclinicaggregate(input:any) {
         try{
-        return await Clinic.aggregate(input);
+        return await Clinic.aggregate(input).allowDiskUse(true);
         }
         catch(e:any){
           console.log(e.message);
@@ -74,7 +74,7 @@ export async function readpaymentaggregate(input:any) {
 
         export async function readwardaggregate(input:any) {
             try{
-            return await Wardmanagement.aggregate(input);
+            return await Wardmanagement.aggregate(input).allowDiskUse(true);
             }
             catch(e:any){
               console.log(e);
@@ -83,7 +83,7 @@ export async function readpaymentaggregate(input:any) {
             }
             export async function readprocedureaggregate(input:any) {
               try{
-              return await Procedure.aggregate(input);
+              return await Procedure.aggregate(input).allowDiskUse(true);
               }
               catch(e:any){
                 console.log(e);
@@ -95,7 +95,7 @@ export async function readpaymentaggregate(input:any) {
               
               export async function readlabaggregate(input:any) {
                 try{
-                return await Lab.aggregate(input);
+                return await Lab.aggregate(input).allowDiskUse(true);
                 }
                 catch(e:any){
                   console.log(e);
@@ -106,7 +106,7 @@ export async function readpaymentaggregate(input:any) {
                 //radiology
                 export async function readradiologyaggregate(input:any) {
                   try{
-                  return await Radiology.aggregate(input);
+                  return await Radiology.aggregate(input).allowDiskUse(true);
                   }
                   catch(e:any){
                     console.log(e);
@@ -117,7 +117,7 @@ export async function readpaymentaggregate(input:any) {
                   //Prescription
                   export async function readprescriptionaggregate(input:any) {
                     try{
-                    return await Prescription.aggregate(input);
+                    return await Prescription.aggregate(input).allowDiskUse(true);
                     }
                     catch(e:any){
                       console.log(e);
@@ -128,7 +128,7 @@ export async function readpaymentaggregate(input:any) {
                     //nutrition
                       export async function readnutritionaggregate(input:any) {
                     try{
-                    return await Nutrition.aggregate(input);
+                    return await Nutrition.aggregate(input).allowDiskUse(true);
                     }
                     catch(e:any){
                       console.log(e);

@@ -74,6 +74,13 @@ const admissionSchema = new Schema({
   { timestamps: true }
 );
 
+admissionSchema.index({ referddate: -1 });
+admissionSchema.index({ patient: 1 });
+admissionSchema.index({ referedward: 1 });
+admissionSchema.index({ status: 1 });
+admissionSchema.index({ referedward: 1, referddate: -1 });
+admissionSchema.index({ createdAt: -1 });
+
 const admission = model('Admission', admissionSchema);
 export default admission;
 

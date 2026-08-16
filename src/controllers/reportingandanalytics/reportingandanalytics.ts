@@ -114,7 +114,16 @@ export const reports = async (req: any, res: any) => {
       enddate = new Date(enddate);
     }
 
+    const financialMatch = (querygroup && querygroup !== "All") ? { paymentcategory: querygroup } : {};
     const reportbyfinancialreport = [
+      {
+        $match: {
+          $and: [
+            financialMatch,
+            { updatedAt: { $gt: startdate, $lt: enddate } }
+          ]
+        }
+      },
       {
         $lookup: {
           from: "patientsmanagements",
@@ -122,11 +131,7 @@ export const reports = async (req: any, res: any) => {
           foreignField: "_id",
           as: "patient",
         },
-      },
-      {
-        $match: { $and: [{ paymentcategory: querygroup }, { updatedAt: { $gt: startdate, $lt: enddate } }] }
       }
-
     ];
 
     //admission
@@ -154,6 +159,11 @@ export const reports = async (req: any, res: any) => {
     const wardMatch = (querygroup && querygroup !== "All") ? { "referedward.wardname": querygroup } : {};
 
     const reportbyadmissionreport = [
+      {
+        $match: {
+          referddate: { $gte: startdate, $lte: enddate }
+        }
+      },
       {
         $lookup: {
           from: "patientsmanagements",
@@ -183,12 +193,7 @@ export const reports = async (req: any, res: any) => {
         }
       },
       {
-        $match: {
-          $and: [
-            wardMatch,
-            { referddate: { $gte: startdate, $lte: enddate } }
-          ]
-        }
+        $match: wardMatch
       },
       {
         $project: {
@@ -220,6 +225,17 @@ export const reports = async (req: any, res: any) => {
 
     const reportbyappointmentreport = [
       {
+        $match: {
+          $and: [
+            clinicMatch,
+            { appointmentdate: { $gte: startdate, $lte: enddate } }
+          ]
+        }
+      },
+      {
+        $sort: { appointmentdate: 1 }
+      },
+      {
         $lookup: {
           from: "patientsmanagements",
           localField: "patient",
@@ -240,17 +256,6 @@ export const reports = async (req: any, res: any) => {
           foreignField: "_id",
           as: "labDetails",
         },
-      },
-      {
-        $match: {
-          $and: [
-            clinicMatch,
-            { appointmentdate: { $gte: startdate, $lte: enddate } }
-          ]
-        }
-      },
-      {
-        $sort: { appointmentdate: 1 }
       }
     ];
 

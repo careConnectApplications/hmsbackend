@@ -73,10 +73,14 @@ const paymentSchema = new Schema(
   },
   { timestamps: true }
 );
-paymentSchema.index({ status: 1, paymentreference: 1, createdAt: -1 })
-paymentSchema.index({ paymentreference: 1 })
+paymentSchema.index({ status: 1, paymentreference: 1, createdAt: -1 });
+paymentSchema.index({ paymentreference: 1 });
 paymentSchema.index({ status: 1 });
 paymentSchema.index({ patient: 1 });
+paymentSchema.index({ paymentcategory: 1 });
+paymentSchema.index({ updatedAt: -1 });
+paymentSchema.index({ paymentcategory: 1, updatedAt: -1 });
+paymentSchema.index({ paymentcategory: 1, createdAt: -1 });
 
 
 //create a model

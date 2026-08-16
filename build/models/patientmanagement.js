@@ -194,6 +194,9 @@ patientSchema.index({ lastName: 1 });
 patientSchema.index({ MRN: 1 });
 patientSchema.index({ phoneNumber: 1 });
 patientSchema.index({ HMOId: 1 });
+patientSchema.index({ HMOName: 1 });
+patientSchema.index({ patienttype: 1 });
+patientSchema.index({ createdAt: -1 });
 //create a model
 const patientsmanagement = (0, mongoose_1.model)("Patientsmanagement", patientSchema);
 //export the model
