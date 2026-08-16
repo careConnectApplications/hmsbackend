@@ -124,13 +124,25 @@ function getalladmissionbypatient(req, res) {
 function updateadmissionstatus(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         const { id } = req.params;
-        var { status, transfterto } = req.body;
-        transfterto = new ObjectId(transfterto);
+        var { status, transfterto, dischargereason, dischargedate } = req.body;
+        if (transfterto) {
+            transfterto = new ObjectId(transfterto);
+        }
         try {
             //validate that status is included in te status choice
             if (!(config_1.default.admissionstatus).includes(status))
                 throw new Error(`${status} status doesnt ${config_1.default.error.erroralreadyexit}`);
-            //if status = discharge
+            // ONLY validate when status is todischarge
+            var reasonValue = dischargereason;
+            var dischargeDateValue = dischargedate ? new Date(dischargedate) : new Date();
+            if (status == config_1.default.admissionstatus[4]) {
+                if (!reasonValue) {
+                    throw new Error(`dischargereason ${config_1.default.error.errorisrequired}`);
+                }
+                if (!(config_1.default.dischargereasons).includes(reasonValue)) {
+                    throw new Error(`dischargereason ${config_1.default.error.erroroption}`);
+                }
+            }
             const response = yield (0, admissions_1.readoneadmission)({ _id: id }, {}, '');
             // check for availability of bed spaces in ward only for admitted
             if (!response) {
@@ -141,7 +153,7 @@ function updateadmissionstatus(req, res) {
                 // return error
                 throw new Error(`Ward donot ${config_1.default.error.erroralreadyexit}`);
             }
-            var transftertoward = yield (0, wardmanagement_1.readonewardmanagement)({ _id: transfterto }, {});
+            var transftertoward = transfterto ? yield (0, wardmanagement_1.readonewardmanagement)({ _id: transfterto }, {}) : null;
             if (transfterto && status == config_1.default.admissionstatus[2] && !transftertoward) {
                 // return error
                 throw new Error(`Ward to be transfered donot  ${config_1.default.error.erroralreadyexit}`);
@@ -152,9 +164,12 @@ function updateadmissionstatus(req, res) {
             if ((status == config_1.default.admissionstatus[1] || status == config_1.default.admissionstatus[3]) && ward.vacantbed < 1) {
                 throw new Error(`${ward.wardname}  ${config_1.default.error.errorvacantspace}`);
             }
-            //validate if permitted base on status
-            //const status= response?.status == configuration.status[0]? configuration.status[1]: configuration.status[0];
-            const queryresult = yield (0, admissions_1.updateadmission)(id, { status });
+            var updatePayload = { status };
+            if (status == config_1.default.admissionstatus[4]) {
+                updatePayload.dischargereason = reasonValue;
+                updatePayload.dischargedate = dischargeDateValue;
+            }
+            const queryresult = yield (0, admissions_1.updateadmission)(id, updatePayload);
             //if status is equal to admit reduce  ward count
             if (status == config_1.default.admissionstatus[1] || status == config_1.default.admissionstatus[3]) {
                 yield (0, wardmanagement_1.updatewardmanagement)(queryresult.referedward, { $inc: { occupiedbed: 1, vacantbed: -1 } });

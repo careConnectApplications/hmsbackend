@@ -47,6 +47,12 @@ const admissionSchema = new mongoose_1.Schema({
     staffname: {
         type: String
     },
+    dischargereason: {
+        type: String
+    },
+    dischargedate: {
+        type: Date
+    },
     status: {
         type: String,
         default: config_1.default.admissionstatus[0],

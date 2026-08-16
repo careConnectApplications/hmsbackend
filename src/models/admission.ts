@@ -5,10 +5,10 @@ import configuration from "../config";
 
 
 const admissionSchema = new Schema({
-  
-  alldiagnosis:[{
+
+  alldiagnosis: [{
     note: String,
-    diagnosis:String
+    diagnosis: String
   }],
   referedward:
   {
@@ -32,7 +32,7 @@ const admissionSchema = new Schema({
   },
   referddate:
   {
-    type: Date, 
+    type: Date,
     required: true
   },
   patient: {
@@ -40,33 +40,41 @@ const admissionSchema = new Schema({
     ref: "Patientsmanagement",
     default: null,
   },
-  appointment: 
-    {
-      type: Schema.Types.ObjectId,
-      ref: "Appointment",
-      default: null,
-    }
+  appointment:
+  {
+    type: Schema.Types.ObjectId,
+    ref: "Appointment",
+    default: null,
+  }
   ,
   doctorname:
   {
-    type: String, 
+    type: String,
     required: true
   },
   staffname:
   {
     type: String
-  }, 
-  status:{
+  },
+  dischargereason:
+  {
+    type: String
+  },
+  dischargedate:
+  {
+    type: Date
+  },
+  status: {
     type: String,
     default: configuration.admissionstatus[0],
     required: true
 
   }
 },
-{ timestamps: true }
+  { timestamps: true }
 );
 
-const admission= model('Admission', admissionSchema);
+const admission = model('Admission', admissionSchema);
 export default admission;
 
 
