@@ -27,7 +27,7 @@ jobs:
           npm install
           npm run build
 
-      # Step 4: Verify if build output directory exists (matches your tsconfig outDir)
+      # Step 4: Verify if build output directory exists
       - name: Check if build directory exists
         run: |
           if [ ! -d "./build" ]; then
@@ -37,7 +37,7 @@ jobs:
             echo "Build directory found."
           fi
 
-      # Step 5: Deploy to remote server via SSH using your working password pattern
+      # Step 5: Deploy to remote server via SSH using password authentication
       - name: Deploy to remote server
         env:
           SSH_USERNAME: ${{ secrets.SSH_USERNAME_LIVE }}
@@ -51,8 +51,8 @@ jobs:
           # Ensure remote directory exists
           sshpass -p "$SSH_PASSWORD" ssh -p 21098 -o StrictHostKeyChecking=no "$SSH_USERNAME"@"$SERVER_IP" "mkdir -p /home/azureuser/apps/hmsbackend"
 
-          # Copy the compiled build folder and package.json to the server
-          sshpass -p "$SSH_PASSWORD" scp -P 21098 -o StrictHostKeyChecking=no -r ./build ./package.json "$SSH_USERNAME"@"$SERVER_IP":/home/azureuser/apps/hmsbackend
+          # Copy build output, source code, downloads, and config files to the server
+          sshpass -p "$SSH_PASSWORD" scp -P 21098 -o StrictHostKeyChecking=no -r ./build ./src ./downloads ./package.json ./tsconfig.json "$SSH_USERNAME"@"$SERVER_IP":/home/azureuser/apps/hmsbackend
 
           # Run server-side commands
           sshpass -p "$SSH_PASSWORD" ssh -p 21098 -o StrictHostKeyChecking=no "$SSH_USERNAME"@"$SERVER_IP" << 'EOF'
@@ -61,7 +61,7 @@ jobs:
             # Install production node_modules on the server
             npm install --production
 
-            # If you have a command to restart your raw Node process, add it here:
+            # If you need to restart your Node process, add your commands here:
             # e.g., pkill -f "node build/index.js" || true
             # nohup node build/index.js > app.log 2>&1 &
           EOF
