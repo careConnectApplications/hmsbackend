@@ -240,6 +240,18 @@ export const reports = async (req: any, res: any) => {
           from: "patientsmanagements",
           localField: "patient",
           foreignField: "_id",
+          pipeline: [
+            {
+              $project: {
+                _id: 1,
+                firstName: 1,
+                lastName: 1,
+                MRN: 1,
+                gender: 1,
+                age: 1
+              }
+            }
+          ],
           as: "patient",
         },
       },
@@ -254,6 +266,14 @@ export const reports = async (req: any, res: any) => {
           from: "labs",
           localField: "lab",
           foreignField: "_id",
+          pipeline: [
+            {
+              $project: {
+                _id: 1,
+                testresult: 1
+              }
+            }
+          ],
           as: "labDetails",
         },
       }
