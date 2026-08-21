@@ -94,9 +94,7 @@ export async function readpaymentaggregate(input:any) {
   //update  appointment by query
   export async function updatepaymentbyquery(query:any, reqbody:any){
     try{
-    const payment = await Payment.updateMany(query, reqbody,{
-      new: true
-    });
+    const payment = await Payment.updateMany(query, reqbody);
       if (!payment) {
         //return json  false response
         throw new Error(configuration.error.errorinvalidcredentials);
