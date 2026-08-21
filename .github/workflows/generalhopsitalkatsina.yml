@@ -1,10 +1,10 @@
-name: Build and Deploy React App to Remote Server
+name: Build and Deploy Backend to Remote Server
 
 on:
   push:
-    branches: [prod] #trigger for push to staging
+    branches: [prod]
   pull_request:
-    branches: [prod] # trigger for pull request to staging
+    branches: [prod]
 
 jobs:
   build_and_deploy:
@@ -15,52 +15,53 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Step 2: Set up Node.js and install dependencies
+      # Step 2: Set up Node.js v22.14.0
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: "18" # Specify the Node.js version
+          node-version: "22.14.0"
 
-      #- name: Install dependencies
-      #  run: npm install
-
-      # Step 3: Build the ndejs
-      #- name: Build nodejs app
-      #  run: npm run build
-      # Step 4: Verify if build directory exists
-      - name: Check if src directory exists
+      # Step 3: Install dependencies and build on GitHub runner
+      - name: Install dependencies and build
         run: |
-          echo "Listing files in the repository:"
-          ls -alh
-          if [ ! -d "./src" ]; then
-            echo "src directory not found, aborting deployment."
+          npm install
+          npm run build
+
+      # Step 4: Verify if build output directory exists
+      - name: Check if build directory exists
+        run: |
+          if [ ! -d "./build" ]; then
+            echo "Build directory not found, aborting deployment."
             exit 1
           else
-            echo "src directory found."
+            echo "Build directory found."
           fi
 
-      # Step 5: Deploy to remote server via SSH
+      # Step 5: Deploy to remote server via SSH using password authentication
       - name: Deploy to remote server
         env:
           SSH_USERNAME: ${{ secrets.SSH_USERNAME_LIVE }}
           SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
           SERVER_IP: ${{ secrets.SERVER_IP_LIVE }}
         run: |
-          # Install SSH pass to use password for SSH
+          # Install sshpass
           sudo apt-get update
           sudo apt-get install -y sshpass
 
-          # Deploy build to the server using SCP
-          sshpass -p "$SSH_PASSWORD" scp -P 21098 -o StrictHostKeyChecking=no -r ./src ./downloads ./package.json ./tsconfig.json "$SSH_USERNAME"@"$SERVER_IP":/home/azureuser/apps/hmsbackend
+          # Ensure remote directory exists
+          sshpass -p "$SSH_PASSWORD" ssh -p 21098 -o StrictHostKeyChecking=no "$SSH_USERNAME"@"$SERVER_IP" "mkdir -p /home/azureuser/apps/hmsbackend"
 
-          # Optionally restart your app after copying the build
+          # Copy build output, source code, downloads, and config files to the server
+          sshpass -p "$SSH_PASSWORD" scp -P 21098 -o StrictHostKeyChecking=no -r ./build ./src ./downloads ./package.json ./tsconfig.json "$SSH_USERNAME"@"$SERVER_IP":/home/azureuser/apps/hmsbackend
+
+          # Run server-side commands
           sshpass -p "$SSH_PASSWORD" ssh -p 21098 -o StrictHostKeyChecking=no "$SSH_USERNAME"@"$SERVER_IP" << 'EOF'
-            # Stop any existing server (optional)
-            #pm2 stop 3
-            # server commands (or your app, depending on your setup)
             cd /home/azureuser/apps/hmsbackend
-            npm install
-            npm run build
-            #pm2 --name "kastina" start /home/hms/hmsbackend/build/index.js
+            
+            # Install production node_modules on the server
+            npm install --production
 
+            # If you need to restart your Node process, add your commands here:
+            # e.g., pkill -f "node build/index.js" || true
+            # nohup node build/index.js > app.log 2>&1 &
           EOF
