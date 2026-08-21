@@ -1,15 +1,18 @@
-import mongoose  from 'mongoose';
+import mongoose from 'mongoose';
 import configuration from '../config';
-function dbconnect(){
-    const database =configuration.environment === "test"?process.env.LOCALDATABASE:process.env.DOCKERDATABASE
-   // const database =  'mongodb://mongo_db:27017/ims';
-    mongoose.set('strictQuery', true);
-    return mongoose.connect(database as string,{
-        useNewUrlParser: true,
-       // useUnifiedTopology: true,
-        directConnection:true,
-        family: 4,
 
-    } as object).then(()=> console.log('MongoDb Connected')).catch((e:string) => console.log(e));
+function dbconnect() {
+    const database = configuration.environment === "test" 
+        ? process.env.LOCALDATABASE 
+        : (process.env.MONGO_URI || process.env.DOCKERDATABASE);
+
+    mongoose.set('strictQuery', true);
+
+    return mongoose.connect(database as string, {
+        family: 4,
+        serverSelectionTimeoutMS: 5000,
+    }).then(() => console.log('MongoDb Connected'))
+      .catch((e: Error) => console.log('MongoDB Connection Error:', e.message));
 }
-export  default dbconnect;
+
+export default dbconnect;
