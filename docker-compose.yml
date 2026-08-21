@@ -3,10 +3,11 @@ services:
   #mongo db services
   mongo_db:
     container_name: mongodb
-    image: mongo:5.0
+    image: mongo:4.4 # Official MongoDB 4.4 image
     restart: unless-stopped
     volumes:
       - newdb:/data/db
+
   #hms services1
   hmsservicesone:
     container_name: hmsservicesone
@@ -45,7 +46,7 @@ services:
       - mongo_db
     
 
-#hms services3
+  #hms services3
   hmsservicesthree:
     container_name: hmsservicesthree
     restart: unless-stopped
@@ -57,15 +58,12 @@ services:
         DOCKERDATABASE: mongodb://mongo_db:27017/hms
         KEYGEN: 'w{v{<J2e&$x[/<V#&#G:?Ti?Frv+-P'
 
-
     volumes: 
       - ./uploads:/app/uploads
       #- ./errorlogs:/app/errorlogs
     depends_on:
       - mongo_db
   
-
- 
 
 volumes:
   newdb:
