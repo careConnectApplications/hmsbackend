@@ -36,7 +36,6 @@ const radiology_1 = __importDefault(require("../models/radiology"));
 const prescription_1 = __importDefault(require("../models/prescription"));
 const patientmanagement_1 = __importDefault(require("../models/patientmanagement"));
 const nutrition_1 = __importDefault(require("../models/nutrition"));
-const config_1 = __importDefault(require("../config"));
 function readpatientsmanagementaggregate(input) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
@@ -44,7 +43,7 @@ function readpatientsmanagementaggregate(input) {
         }
         catch (e) {
             console.log(e);
-            throw new Error(config_1.default.error.erroruserupdate);
+            throw e;
         }
     });
 }
@@ -55,7 +54,7 @@ function readpaymentaggregate(input) {
         }
         catch (e) {
             console.log(e);
-            throw new Error(config_1.default.error.erroruserupdate);
+            throw e;
         }
     });
 }
@@ -66,7 +65,7 @@ function readhmoaggregate(input) {
         }
         catch (e) {
             console.log(e);
-            throw new Error(config_1.default.error.erroruserupdate);
+            throw e;
         }
     });
 }
@@ -77,7 +76,7 @@ function readappointmentaggregate(input) {
         }
         catch (e) {
             console.log(e);
-            throw new Error(config_1.default.error.erroruserupdate);
+            throw e;
         }
     });
 }
@@ -88,7 +87,7 @@ function readadmissionaggregate(input) {
         }
         catch (e) {
             console.log(e);
-            throw new Error(config_1.default.error.erroruserupdate);
+            throw e;
         }
     });
 }
@@ -98,8 +97,8 @@ function readclinicaggregate(input) {
             return yield clinics_1.default.aggregate(input).allowDiskUse(true);
         }
         catch (e) {
-            console.log(e.message);
-            throw new Error(config_1.default.error.erroruserupdate);
+            console.log(e);
+            throw e;
         }
     });
 }
@@ -110,7 +109,7 @@ function readwardaggregate(input) {
         }
         catch (e) {
             console.log(e);
-            throw new Error(config_1.default.error.erroruserupdate);
+            throw e;
         }
     });
 }
@@ -121,11 +120,11 @@ function readprocedureaggregate(input) {
         }
         catch (e) {
             console.log(e);
-            throw new Error(config_1.default.error.erroruserupdate);
+            throw e;
         }
     });
 }
-//  lab aggregate
+// lab aggregate
 function readlabaggregate(input) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
@@ -133,11 +132,11 @@ function readlabaggregate(input) {
         }
         catch (e) {
             console.log(e);
-            throw new Error(config_1.default.error.erroruserupdate);
+            throw e;
         }
     });
 }
-//radiology
+// radiology
 function readradiologyaggregate(input) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
@@ -145,11 +144,11 @@ function readradiologyaggregate(input) {
         }
         catch (e) {
             console.log(e);
-            throw new Error(config_1.default.error.erroruserupdate);
+            throw e;
         }
     });
 }
-//Prescription
+// Prescription
 function readprescriptionaggregate(input) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
@@ -157,11 +156,11 @@ function readprescriptionaggregate(input) {
         }
         catch (e) {
             console.log(e);
-            throw new Error(config_1.default.error.erroruserupdate);
+            throw e;
         }
     });
 }
-//nutrition
+// nutrition
 function readnutritionaggregate(input) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
@@ -169,7 +168,7 @@ function readnutritionaggregate(input) {
         }
         catch (e) {
             console.log(e);
-            throw new Error(config_1.default.error.erroruserupdate);
+            throw e;
         }
     });
 }

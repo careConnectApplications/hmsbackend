@@ -19,7 +19,9 @@ const users_1 = require("../../dao/users");
 const otherservices_1 = require("../../utils/otherservices");
 //sign in
 var signin = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
     try {
+        console.log("Signin attempt received:", { email: (_a = req.body) === null || _a === void 0 ? void 0 : _a.email });
         //destructure email and password
         const { email, password } = req.body;
         var requirepasswordchange;
@@ -31,28 +33,36 @@ var signin = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         }
         //validate email and password
         if (!email || !password) {
+            console.log("Signin validation failed: missing email or password");
             throw new Error(config_1.default.error.errornoemailpassword);
         }
         //find user
+        console.log(`Searching database for user email: ${email}`);
         const user = yield (0, users_1.readone)({ email });
         //check if user exit
         if (!user) {
+            console.log(`Signin failed: User with email '${email}' not found`);
             throw new Error(config_1.default.error.errorinvaliduser);
         }
+        console.log(`User found: ${user.email}, status: ${user.status}, role: ${user.role}`);
         //chek if user is active
         if (user.status === config_1.default.status[0]) {
+            console.log(`Signin failed: User '${email}' is deactivated`);
             throw new Error(config_1.default.error.errordeactivate);
         }
         //check if password match
         const isMatch = yield (0, otherservices_1.isValidPassword)(password, user.password);
         if (!isMatch) {
+            console.log(`Signin failed: Password mismatch for user '${email}'`);
             throw new Error(config_1.default.error.errorpasswordmismatch);
         }
+        console.log(`Signin successful for user '${email}'`);
         //respond with token
         var queryresult = (0, otherservices_1.sendTokenResponse)(user);
         res.status(200).json({ queryresult, status: true, requirepasswordchange });
     }
     catch (error) {
+        console.error("Signin Exception:", error.message || error);
         res.status(403).json({ status: false, msg: error.message });
     }
 });

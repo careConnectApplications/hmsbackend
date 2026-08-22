@@ -233,8 +233,24 @@ const reports = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             {
                 $lookup: {
                     from: "patientsmanagements",
-                    localField: "patient",
-                    foreignField: "_id",
+                    let: { patientId: "$patient" },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: { $eq: ["$_id", "$$patientId"] }
+                            }
+                        },
+                        {
+                            $project: {
+                                _id: 1,
+                                firstName: 1,
+                                lastName: 1,
+                                MRN: 1,
+                                gender: 1,
+                                age: 1
+                            }
+                        }
+                    ],
                     as: "patient",
                 },
             },
@@ -247,8 +263,20 @@ const reports = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             {
                 $lookup: {
                     from: "labs",
-                    localField: "lab",
-                    foreignField: "_id",
+                    let: { labId: "$lab" },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: { $eq: ["$_id", "$$labId"] }
+                            }
+                        },
+                        {
+                            $project: {
+                                _id: 1,
+                                testresult: 1
+                            }
+                        }
+                    ],
                     as: "labDetails",
                 },
             }

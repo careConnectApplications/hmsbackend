@@ -238,9 +238,13 @@ export const reports = async (req: any, res: any) => {
       {
         $lookup: {
           from: "patientsmanagements",
-          localField: "patient",
-          foreignField: "_id",
+          let: { patientId: "$patient" },
           pipeline: [
+            {
+              $match: {
+                $expr: { $eq: ["$_id", "$$patientId"] }
+              }
+            },
             {
               $project: {
                 _id: 1,
@@ -264,9 +268,13 @@ export const reports = async (req: any, res: any) => {
       {
         $lookup: {
           from: "labs",
-          localField: "lab",
-          foreignField: "_id",
+          let: { labId: "$lab" },
           pipeline: [
+            {
+              $match: {
+                $expr: { $eq: ["$_id", "$$labId"] }
+              }
+            },
             {
               $project: {
                 _id: 1,
