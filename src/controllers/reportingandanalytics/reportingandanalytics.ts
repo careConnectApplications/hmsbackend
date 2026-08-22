@@ -213,11 +213,68 @@ export const reports = async (req: any, res: any) => {
           doctorname: 1,
           staffname: 1,
           admissionid: 1,
-          admittospecialization: 1
+          admittospecialization: 1,
+          appointment: 1
         }
       },
       {
         $sort: { wardName: 1, referddate: 1 }
+      },
+      {
+        $lookup: {
+          from: "labs",
+          let: { patientId: "$patient._id", apptId: "$appointment" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $or: [
+                    { $eq: ["$patient", "$$patientId"] },
+                    { $eq: ["$appointment", "$$apptId"] }
+                  ]
+                }
+              }
+            },
+            {
+              $project: {
+                _id: 1,
+                testresult: 1
+              }
+            }
+          ],
+          as: "labDetails",
+        },
+      },
+      {
+        $lookup: {
+          from: "prescriptions",
+          let: { patientId: "$patient._id", apptId: "$appointment" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $or: [
+                    { $eq: ["$patient", "$$patientId"] },
+                    { $eq: ["$appointment", "$$apptId"] }
+                  ]
+                }
+              }
+            },
+            {
+              $project: {
+                _id: 1,
+                prescription: 1,
+                dosage: 1,
+                frequency: 1,
+                duration: 1,
+                qty: 1,
+                dispensestatus: 1,
+                servedstatus: 1
+              }
+            }
+          ],
+          as: "prescriptionDetails",
+        },
       }
     ];
 
@@ -283,6 +340,37 @@ export const reports = async (req: any, res: any) => {
             }
           ],
           as: "labDetails",
+        },
+      },
+      {
+        $lookup: {
+          from: "prescriptions",
+          let: { rxIds: { $ifNull: ["$prescription", []] }, apptId: "$_id" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $or: [
+                    { $in: ["$_id", "$$rxIds"] },
+                    { $eq: ["$appointment", "$$apptId"] }
+                  ]
+                }
+              }
+            },
+            {
+              $project: {
+                _id: 1,
+                prescription: 1,
+                dosage: 1,
+                frequency: 1,
+                duration: 1,
+                qty: 1,
+                dispensestatus: 1,
+                servedstatus: 1
+              }
+            }
+          ],
+          as: "prescriptionDetails",
         },
       }
     ];
@@ -508,26 +596,45 @@ export const reports = async (req: any, res: any) => {
         }
 
         let labStr = "";
-        const labResultsArray: any[] = [];
         if (item.labDetails && Array.isArray(item.labDetails) && item.labDetails.length > 0) {
           const resultsList: string[] = [];
+          let labSn = 1;
           item.labDetails.forEach((lab: any) => {
             if (lab.testresult && Array.isArray(lab.testresult) && lab.testresult.length > 0) {
               lab.testresult.forEach((tr: any) => {
-                if (tr && tr.result) {
-                  const entry = {
-                    subcomponent: tr.subcomponent || "",
-                    result: tr.result,
-                    formatted: tr.subcomponent ? `${tr.subcomponent}: ${tr.result}` : tr.result
-                  };
-                  labResultsArray.push(entry);
-                  resultsList.push(entry.formatted);
+                if (tr && (tr.result || tr.subcomponent)) {
+                  const subcomp = tr.subcomponent || "";
+                  const res = tr.result || "";
+                  const rangesStr = tr.nranges || "";
+                  const unitStr = tr.unit || "";
+
+                  const parts = [subcomp, res, rangesStr, unitStr].filter(Boolean);
+                  const formattedStr = parts.join(", ");
+                  if (formattedStr) {
+                    resultsList.push(`${labSn}. ${formattedStr}`);
+                    labSn++;
+                  }
                 }
               });
             }
           });
-          if (resultsList.length > 0) {
-            labStr = resultsList.join(", ");
+          labStr = resultsList.join(", ");
+        }
+
+        let drugsGivenStr = "";
+        if (item.prescriptionDetails && Array.isArray(item.prescriptionDetails) && item.prescriptionDetails.length > 0) {
+          const drugList: string[] = [];
+          item.prescriptionDetails.forEach((rx: any) => {
+            if (rx) {
+              const drugName = rx.prescription || rx.drugname || rx.name || "";
+              if (drugName) {
+                const parts = [drugName, rx.dosage, rx.frequency, rx.duration].filter(Boolean);
+                drugList.push(parts.join(" "));
+              }
+            }
+          });
+          if (drugList.length > 0) {
+            drugsGivenStr = drugList.join(", ");
           }
         }
 
@@ -546,7 +653,7 @@ export const reports = async (req: any, res: any) => {
           presentingComplaint: complaint,
           diagnosis: diagnosisStr,
           labinvestigation: labStr,
-          labResults: labResultsArray
+          drugsGiven: drugsGivenStr
         };
       });
     }
@@ -562,17 +669,68 @@ export const reports = async (req: any, res: any) => {
         const dischargeDateStr = item.dischargedate ? item.dischargedate : null;
         const patientObj = item.patient || {};
 
+        let labStr = "";
+        if (item.labDetails && Array.isArray(item.labDetails) && item.labDetails.length > 0) {
+          const resultsList: string[] = [];
+          let labSn = 1;
+          item.labDetails.forEach((lab: any) => {
+            if (lab.testresult && Array.isArray(lab.testresult) && lab.testresult.length > 0) {
+              lab.testresult.forEach((tr: any) => {
+                if (tr && (tr.result || tr.subcomponent)) {
+                  const subcomp = tr.subcomponent || "";
+                  const res = tr.result || "";
+                  const rangesStr = tr.nranges || "";
+                  const unitStr = tr.unit || "";
+
+                  const parts = [subcomp, res, rangesStr, unitStr].filter(Boolean);
+                  const formattedStr = parts.join(", ");
+                  if (formattedStr) {
+                    resultsList.push(`${labSn}. ${formattedStr}`);
+                    labSn++;
+                  }
+                }
+              });
+            }
+          });
+          labStr = resultsList.join(", ");
+        }
+
+        let drugsGivenStr = "";
+        if (item.prescriptionDetails && Array.isArray(item.prescriptionDetails) && item.prescriptionDetails.length > 0) {
+          const drugList: string[] = [];
+          item.prescriptionDetails.forEach((rx: any) => {
+            if (rx) {
+              const statusStr = (rx.dispensestatus || "").toString().trim().toLowerCase();
+              if (statusStr.includes("complete")) {
+                const drugName = rx.prescription || rx.drugname || rx.name || "";
+                if (drugName) {
+                  const parts = [drugName, rx.dosage, rx.frequency, rx.duration].filter(Boolean);
+                  drugList.push(parts.join(" "));
+                }
+              }
+            }
+          });
+          if (drugList.length > 0) {
+            drugsGivenStr = drugList.join(", ");
+          }
+        }
+
+        const dateOfDischarge = item.dischargedate || null;
+
         return {
           ...item,
           patient: patientObj,
           sn: index + 1,
           wardName: item.wardName || "Unassigned Ward",
           dateOfAdmission: item.referddate,
+          dateOfDischarge: dateOfDischarge,
           patientName: `${patientObj.lastName || item.patientSurname || ''} ${patientObj.firstName || item.patientFirstName || ''}`.trim(),
           patientNumber: patientObj.MRN || item.patientNumber || "",
           sex: patientObj.gender || item.sex || "",
           age: patientObj.age || item.age || "",
           diagnosis: diagnosisList,
+          labinvestigation: labStr,
+          drugsGiven: drugsGivenStr,
           admissionOutcome: {
             abs: reason.includes("ABS") ? dischargeDateStr : null,
             disch: reason.includes("DISCH") ? dischargeDateStr : null,
