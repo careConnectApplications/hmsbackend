@@ -110,9 +110,11 @@ export const reports = async (req: any, res: any) => {
         todaydate.getDate()
       );
     } else {
-      startdate = new Date(startdate);
-      enddate = new Date(enddate);
-      enddate.setHours(23, 59, 59, 999);
+      // Parse as UTC midnight/end-of-day so server timezone has no effect
+      const [sy, sm, sd] = String(startdate).split('-').map(Number);
+      const [ey, em, ed] = String(enddate).split('-').map(Number);
+      startdate = new Date(Date.UTC(sy, sm - 1, sd, 0, 0, 0, 0));
+      enddate   = new Date(Date.UTC(ey, em - 1, ed, 23, 59, 59, 999));
       if (startdate > enddate) {
         const temp = startdate;
         startdate = enddate;
@@ -889,9 +891,11 @@ export const cashierreport = async (req: any, res: any) => {
         todaydate.getDate()
       );
     } else {
-      startdate = new Date(startdate);
-      enddate = new Date(enddate);
-      enddate.setHours(23, 59, 59, 999);
+      // Parse as UTC midnight/end-of-day so server timezone has no effect
+      const [sy, sm, sd] = String(startdate).split('-').map(Number);
+      const [ey, em, ed] = String(enddate).split('-').map(Number);
+      startdate = new Date(Date.UTC(sy, sm - 1, sd, 0, 0, 0, 0));
+      enddate   = new Date(Date.UTC(ey, em - 1, ed, 23, 59, 59, 999));
       if (startdate > enddate) {
         const temp = startdate;
         startdate = enddate;
@@ -900,12 +904,12 @@ export const cashierreport = async (req: any, res: any) => {
     }
 
 
-    var query = { cashieremail: email, updatedAt: { $gt: startdate, $lt: enddate } };
+    var query = { cashieremail: email, status: configuration.status[3], updatedAt: { $gte: startdate, $lte: enddate } };
     var populatequery = 'patient';
     const cashieraggregatependingpaid = [
       {
 
-        $match: { $and: [{ status: configuration.status[3] }, { cashieremail: email }, { updatedAt: { $gt: startdate, $lt: enddate } }] }
+        $match: { $and: [{ status: configuration.status[3] }, { cashieremail: email }, { updatedAt: { $gte: startdate, $lte: enddate } }] }
 
       },
       {
@@ -958,9 +962,11 @@ export const reportsummary = async (req: any, res: any) => {
         todaydate.getDate()
       );
     } else {
-      startdate = new Date(startdate);
-      enddate = new Date(enddate);
-      enddate.setHours(23, 59, 59, 999);
+      // Parse as UTC midnight/end-of-day so server timezone has no effect
+      const [sy, sm, sd] = String(startdate).split('-').map(Number);
+      const [ey, em, ed] = String(enddate).split('-').map(Number);
+      startdate = new Date(Date.UTC(sy, sm - 1, sd, 0, 0, 0, 0));
+      enddate   = new Date(Date.UTC(ey, em - 1, ed, 23, 59, 59, 999));
       if (startdate > enddate) {
         const temp = startdate;
         startdate = enddate;
@@ -971,7 +977,7 @@ export const reportsummary = async (req: any, res: any) => {
     let { summary }: any = await settings();
     const financialaggregatepaid = [
       {
-        $match: { $and: [{ status: configuration.status[3] }, { updatedAt: { $gt: startdate, $lt: enddate } }] }
+        $match: { $and: [{ status: configuration.status[3] }, { updatedAt: { $gte: startdate, $lte: enddate } }] }
       },
       {
         $group: {
@@ -994,7 +1000,7 @@ export const reportsummary = async (req: any, res: any) => {
     const financialaggregategrandtotalpaid = [
       {
 
-        $match: { $and: [{ status: configuration.status[3] }, { updatedAt: { $gt: startdate, $lt: enddate } }] }
+        $match: { $and: [{ status: configuration.status[3] }, { updatedAt: { $gte: startdate, $lte: enddate } }] }
       },
       {
         $group: {
@@ -1015,7 +1021,7 @@ export const reportsummary = async (req: any, res: any) => {
     const financialaggregatependingpaid = [
       {
 
-        $match: { $and: [{ status: configuration.status[2] }, { updatedAt: { $gt: startdate, $lt: enddate } }] }
+        $match: { $and: [{ status: configuration.status[2] }, { updatedAt: { $gte: startdate, $lte: enddate } }] }
 
       },
       {
@@ -1039,7 +1045,7 @@ export const reportsummary = async (req: any, res: any) => {
     const cashieraggregatepaid = [
       {
 
-        $match: { $and: [{ status: configuration.status[3] }, { updatedAt: { $gt: startdate, $lt: enddate } }] }
+        $match: { $and: [{ status: configuration.status[3] }, { updatedAt: { $gte: startdate, $lte: enddate } }] }
 
       },
       /*
@@ -1098,7 +1104,7 @@ export const reportsummary = async (req: any, res: any) => {
     const cashieraggregatepaidgrandtotal = [
       {
 
-        $match: { $and: [{ status: configuration.status[3] }, { updatedAt: { $gt: startdate, $lt: enddate } }] }
+        $match: { $and: [{ status: configuration.status[3] }, { updatedAt: { $gte: startdate, $lte: enddate } }] }
 
       },
       {
