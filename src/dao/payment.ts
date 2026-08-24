@@ -6,7 +6,7 @@ import configuration from "../config";
 
 export async function readpaymentaggregate(input:any) {
   try{
-  return await Payment.aggregate(input);
+  return await Payment.aggregate(input).allowDiskUse(true);
   }
   catch(e:any){
     console.log(e);
@@ -16,8 +16,8 @@ export async function readpaymentaggregate(input:any) {
   export async function readpaymentaggregateoptimized(input:any,page:any,size:any) {
     try{
     const skip = (page - 1) * size;
-    const paymentdetails=await Payment.aggregate(input).skip(skip).limit(size).sort({ createdAt: -1 });
-     const totalpaymentdetails = (await Payment.aggregate(input)).length;
+    const paymentdetails=await Payment.aggregate(input).allowDiskUse(true).skip(skip).limit(size).sort({ createdAt: -1 });
+     const totalpaymentdetails = (await Payment.aggregate(input).allowDiskUse(true)).length;
           const totalPages = Math.ceil(totalpaymentdetails / size);
           return { paymentdetails, totalPages,totalpaymentdetails, size, page};  
   }
@@ -41,7 +41,7 @@ export async function readpaymentaggregate(input:any) {
   };
   export async function readallpaymentaggregate(input:any) {
     try{
-    return await Payment.aggregate(input);
+    return await Payment.aggregate(input).allowDiskUse(true);
     }
     catch(e:any){
       throw new Error(configuration.error.erroruserread);

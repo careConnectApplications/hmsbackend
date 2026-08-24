@@ -25,7 +25,7 @@ const config_1 = __importDefault(require("../config"));
 function readpaymentaggregate(input) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            return yield payment_1.default.aggregate(input);
+            return yield payment_1.default.aggregate(input).allowDiskUse(true);
         }
         catch (e) {
             console.log(e);
@@ -37,8 +37,8 @@ function readpaymentaggregateoptimized(input, page, size) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             const skip = (page - 1) * size;
-            const paymentdetails = yield payment_1.default.aggregate(input).skip(skip).limit(size).sort({ createdAt: -1 });
-            const totalpaymentdetails = (yield payment_1.default.aggregate(input)).length;
+            const paymentdetails = yield payment_1.default.aggregate(input).allowDiskUse(true).skip(skip).limit(size).sort({ createdAt: -1 });
+            const totalpaymentdetails = (yield payment_1.default.aggregate(input).allowDiskUse(true)).length;
             const totalPages = Math.ceil(totalpaymentdetails / size);
             return { paymentdetails, totalPages, totalpaymentdetails, size, page };
         }
@@ -67,7 +67,7 @@ function readallpayment(query, populatequery) {
 function readallpaymentaggregate(input) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            return yield payment_1.default.aggregate(input);
+            return yield payment_1.default.aggregate(input).allowDiskUse(true);
         }
         catch (e) {
             throw new Error(config_1.default.error.erroruserread);

@@ -112,6 +112,12 @@ export const reports = async (req: any, res: any) => {
     } else {
       startdate = new Date(startdate);
       enddate = new Date(enddate);
+      enddate.setHours(23, 59, 59, 999);
+      if (startdate > enddate) {
+        const temp = startdate;
+        startdate = enddate;
+        enddate = temp;
+      }
     }
 
     const financialMatch = (querygroup && querygroup !== "All") ? { paymentcategory: querygroup } : {};
@@ -278,30 +284,41 @@ export const reports = async (req: any, res: any) => {
       }
     ];
 
-    const clinicMatch = (querygroup && querygroup !== "All") ? { clinic: querygroup } : {};
+    const appointmentMatch: any = { appointmentdate: { $gte: startdate, $lte: enddate } };
+    if (querygroup && querygroup !== "All") {
+      appointmentMatch.clinic = querygroup;
+    }
 
     const reportbyappointmentreport = [
       {
-        $match: {
-          $and: [
-            clinicMatch,
-            { appointmentdate: { $gte: startdate, $lte: enddate } }
-          ]
-        }
+        $match: appointmentMatch
       },
       {
         $sort: { appointmentdate: 1 }
       },
       {
+        $project: {
+          appointmentdate: 1,
+          appointmenttype: 1,
+          clinic: 1,
+          patient: 1,
+          reason: 1,
+          diagnosis: 1,
+          lab: 1,
+          prescription: 1,
+          clinicalencounter: 1,
+          encounter: 1,
+          lastName: 1,
+          firstName: 1,
+          MRN: 1
+        }
+      },
+      {
         $lookup: {
           from: "patientsmanagements",
-          let: { patientId: "$patient" },
+          localField: "patient",
+          foreignField: "_id",
           pipeline: [
-            {
-              $match: {
-                $expr: { $eq: ["$_id", "$$patientId"] }
-              }
-            },
             {
               $project: {
                 _id: 1,
@@ -325,11 +342,16 @@ export const reports = async (req: any, res: any) => {
       {
         $lookup: {
           from: "labs",
-          let: { labId: "$lab" },
+          let: { labId: "$lab", apptId: "$_id" },
           pipeline: [
             {
               $match: {
-                $expr: { $eq: ["$_id", "$$labId"] }
+                $expr: {
+                  $or: [
+                    { $eq: ["$_id", "$$labId"] },
+                    { $eq: ["$appointment", "$$apptId"] }
+                  ]
+                }
               }
             },
             {
@@ -865,6 +887,12 @@ export const cashierreport = async (req: any, res: any) => {
     } else {
       startdate = new Date(startdate);
       enddate = new Date(enddate);
+      enddate.setHours(23, 59, 59, 999);
+      if (startdate > enddate) {
+        const temp = startdate;
+        startdate = enddate;
+        enddate = temp;
+      }
     }
 
 
@@ -928,6 +956,12 @@ export const reportsummary = async (req: any, res: any) => {
     } else {
       startdate = new Date(startdate);
       enddate = new Date(enddate);
+      enddate.setHours(23, 59, 59, 999);
+      if (startdate > enddate) {
+        const temp = startdate;
+        startdate = enddate;
+        enddate = temp;
+      }
     }
 
     let { summary }: any = await settings();

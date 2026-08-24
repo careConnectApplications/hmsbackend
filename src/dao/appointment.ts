@@ -16,7 +16,7 @@ export async function countappointment(query:any) {
 export async function modifiedreadallappointment(query:any, aggregatequery:any){
 
 try{
- var appointmentdetails = await Appointment.aggregate(aggregatequery);
+ var appointmentdetails = await Appointment.aggregate(aggregatequery).allowDiskUse(true);
 const totalappointmentdetails = await Appointment.find(query).countDocuments();
 return { appointmentdetails, totalappointmentdetails };
 
@@ -100,8 +100,8 @@ export async function readallappointmentfirstfive(query:any,selectquery:any,popu
 export async function readallappointmentpaginated(input:any,page:any,size:any) {
     try{
     const skip = (page - 1) * size;
-    const appointmentdetails=await Appointment.aggregate(input).skip(skip).limit(size).sort({ createdAt: -1 });
-     const totalappointentdetails = (await Appointment.aggregate(input)).length;
+    const appointmentdetails=await Appointment.aggregate(input).allowDiskUse(true).skip(skip).limit(size).sort({ createdAt: -1 });
+     const totalappointentdetails = (await Appointment.aggregate(input).allowDiskUse(true)).length;
           const totalPages = Math.ceil(totalappointentdetails / size);
           return { appointmentdetails, totalPages,totalappointentdetails, size, page};  
   }

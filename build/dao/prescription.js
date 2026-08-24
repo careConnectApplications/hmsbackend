@@ -102,8 +102,8 @@ function optimizedreadprescriptionaggregate(input, page, size) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             const skip = (page - 1) * size;
-            const pharmacydetails = yield prescription_1.default.aggregate(input).skip(skip).limit(size).sort({ createdAt: -1 });
-            const totalpharmacydetails = (yield prescription_1.default.aggregate(input)).length;
+            const pharmacydetails = yield prescription_1.default.aggregate(input).allowDiskUse(true).skip(skip).limit(size).sort({ createdAt: -1 });
+            const totalpharmacydetails = (yield prescription_1.default.aggregate(input).allowDiskUse(true)).length;
             const totalPages = Math.ceil(totalpharmacydetails / size);
             return { pharmacydetails, totalPages, totalpharmacydetails, size, page };
         }
@@ -116,7 +116,7 @@ function optimizedreadprescriptionaggregate(input, page, size) {
 function readprescriptionaggregate(input) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            return yield prescription_1.default.aggregate(input);
+            return yield prescription_1.default.aggregate(input).allowDiskUse(true);
         }
         catch (e) {
             console.log(e);

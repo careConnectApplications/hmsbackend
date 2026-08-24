@@ -68,5 +68,7 @@ const labSchema = new mongoose_1.Schema({
         default: config_1.default.status[14],
     }
 }, { timestamps: true });
+labSchema.index({ appointment: 1 });
+labSchema.index({ patient: 1 });
 const lab = (0, mongoose_1.model)('Lab', labSchema);
 exports.default = lab;

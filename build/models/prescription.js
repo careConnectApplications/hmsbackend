@@ -82,6 +82,8 @@ const prescriptionSchema = new mongoose_1.Schema({
         default: config_1.default.servedstatus[1]
     }
 }, { timestamps: true });
+prescriptionSchema.index({ appointment: 1 });
+prescriptionSchema.index({ patient: 1 });
 const prescription = (0, mongoose_1.model)('Prescription', prescriptionSchema);
 exports.default = prescription;
 /*
