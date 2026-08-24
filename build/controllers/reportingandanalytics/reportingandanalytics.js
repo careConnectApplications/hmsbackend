@@ -311,9 +311,13 @@ const reports = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             {
                 $lookup: {
                     from: "patientsmanagements",
-                    localField: "patient",
-                    foreignField: "_id",
+                    let: { patientId: "$patient" },
                     pipeline: [
+                        {
+                            $match: {
+                                $expr: { $eq: ["$_id", "$$patientId"] }
+                            }
+                        },
                         {
                             $project: {
                                 _id: 1,
