@@ -113,9 +113,11 @@ const reports = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             startdate = new Date(todaydate.getFullYear(), todaydate.getMonth() - 6, todaydate.getDate());
         }
         else {
-            startdate = new Date(startdate);
-            enddate = new Date(enddate);
-            enddate.setHours(23, 59, 59, 999);
+            // Parse as UTC midnight/end-of-day so server timezone has no effect
+            const [sy, sm, sd] = String(startdate).split('-').map(Number);
+            const [ey, em, ed] = String(enddate).split('-').map(Number);
+            startdate = new Date(Date.UTC(sy, sm - 1, sd, 0, 0, 0, 0));
+            enddate = new Date(Date.UTC(ey, em - 1, ed, 23, 59, 59, 999));
             if (startdate > enddate) {
                 const temp = startdate;
                 startdate = enddate;
@@ -792,20 +794,22 @@ const cashierreport = (req, res) => __awaiter(void 0, void 0, void 0, function* 
             startdate = new Date(todaydate.getFullYear(), todaydate.getMonth(), todaydate.getDate());
         }
         else {
-            startdate = new Date(startdate);
-            enddate = new Date(enddate);
-            enddate.setHours(23, 59, 59, 999);
+            // Parse as UTC midnight/end-of-day so server timezone has no effect
+            const [sy, sm, sd] = String(startdate).split('-').map(Number);
+            const [ey, em, ed] = String(enddate).split('-').map(Number);
+            startdate = new Date(Date.UTC(sy, sm - 1, sd, 0, 0, 0, 0));
+            enddate = new Date(Date.UTC(ey, em - 1, ed, 23, 59, 59, 999));
             if (startdate > enddate) {
                 const temp = startdate;
                 startdate = enddate;
                 enddate = temp;
             }
         }
-        var query = { cashieremail: email, updatedAt: { $gt: startdate, $lt: enddate } };
+        var query = { cashieremail: email, status: config_1.default.status[3], updatedAt: { $gte: startdate, $lte: enddate } };
         var populatequery = 'patient';
         const cashieraggregatependingpaid = [
             {
-                $match: { $and: [{ status: config_1.default.status[3] }, { cashieremail: email }, { updatedAt: { $gt: startdate, $lt: enddate } }] }
+                $match: { $and: [{ status: config_1.default.status[3] }, { cashieremail: email }, { updatedAt: { $gte: startdate, $lte: enddate } }] }
             },
             {
                 $group: {
@@ -847,9 +851,11 @@ const reportsummary = (req, res) => __awaiter(void 0, void 0, void 0, function* 
             startdate = new Date(todaydate.getFullYear(), todaydate.getMonth(), todaydate.getDate());
         }
         else {
-            startdate = new Date(startdate);
-            enddate = new Date(enddate);
-            enddate.setHours(23, 59, 59, 999);
+            // Parse as UTC midnight/end-of-day so server timezone has no effect
+            const [sy, sm, sd] = String(startdate).split('-').map(Number);
+            const [ey, em, ed] = String(enddate).split('-').map(Number);
+            startdate = new Date(Date.UTC(sy, sm - 1, sd, 0, 0, 0, 0));
+            enddate = new Date(Date.UTC(ey, em - 1, ed, 23, 59, 59, 999));
             if (startdate > enddate) {
                 const temp = startdate;
                 startdate = enddate;
@@ -859,7 +865,7 @@ const reportsummary = (req, res) => __awaiter(void 0, void 0, void 0, function* 
         let { summary } = yield (0, settings_1.settings)();
         const financialaggregatepaid = [
             {
-                $match: { $and: [{ status: config_1.default.status[3] }, { updatedAt: { $gt: startdate, $lt: enddate } }] }
+                $match: { $and: [{ status: config_1.default.status[3] }, { updatedAt: { $gte: startdate, $lte: enddate } }] }
             },
             {
                 $group: {
@@ -878,7 +884,7 @@ const reportsummary = (req, res) => __awaiter(void 0, void 0, void 0, function* 
         ];
         const financialaggregategrandtotalpaid = [
             {
-                $match: { $and: [{ status: config_1.default.status[3] }, { updatedAt: { $gt: startdate, $lt: enddate } }] }
+                $match: { $and: [{ status: config_1.default.status[3] }, { updatedAt: { $gte: startdate, $lte: enddate } }] }
             },
             {
                 $group: {
@@ -895,7 +901,7 @@ const reportsummary = (req, res) => __awaiter(void 0, void 0, void 0, function* 
         ];
         const financialaggregatependingpaid = [
             {
-                $match: { $and: [{ status: config_1.default.status[2] }, { updatedAt: { $gt: startdate, $lt: enddate } }] }
+                $match: { $and: [{ status: config_1.default.status[2] }, { updatedAt: { $gte: startdate, $lte: enddate } }] }
             },
             {
                 $group: {
@@ -914,7 +920,7 @@ const reportsummary = (req, res) => __awaiter(void 0, void 0, void 0, function* 
         ];
         const cashieraggregatepaid = [
             {
-                $match: { $and: [{ status: config_1.default.status[3] }, { updatedAt: { $gt: startdate, $lt: enddate } }] }
+                $match: { $and: [{ status: config_1.default.status[3] }, { updatedAt: { $gte: startdate, $lte: enddate } }] }
             },
             /*
             {
@@ -967,7 +973,7 @@ const reportsummary = (req, res) => __awaiter(void 0, void 0, void 0, function* 
         ];
         const cashieraggregatepaidgrandtotal = [
             {
-                $match: { $and: [{ status: config_1.default.status[3] }, { updatedAt: { $gt: startdate, $lt: enddate } }] }
+                $match: { $and: [{ status: config_1.default.status[3] }, { updatedAt: { $gte: startdate, $lte: enddate } }] }
             },
             {
                 $group: {
