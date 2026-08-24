@@ -38,8 +38,8 @@ import configuration from "../config";
     
       try{
         const skip = (page - 1) * size;
-       var labdetails = await Lab.aggregate(aggregatequery).skip(skip).limit(size).sort({ createdAt: -1 });;
-      const totallabdetails = (await Lab.aggregate(aggregatequery)).length;
+       var labdetails = await Lab.aggregate(aggregatequery).allowDiskUse(true).skip(skip).limit(size).sort({ createdAt: -1 });;
+      const totallabdetails = (await Lab.aggregate(aggregatequery).allowDiskUse(true)).length;
       const totalPages = Math.ceil(totallabdetails / size);
       return { labdetails, totalPages,totallabdetails, size, page};
       
@@ -117,7 +117,7 @@ import configuration from "../config";
 
   export async function readlabaggregate(input:any) {
     try{
-    return await Lab.aggregate(input);
+    return await Lab.aggregate(input).allowDiskUse(true);
     }
     catch(e:any){
       console.log(e);

@@ -80,8 +80,8 @@ import configuration from "../config";
   export async function optimizedreadprescriptionaggregate(input:any,page:any,size:any ) {
     try{
     const skip = (page - 1) * size;
-    const pharmacydetails = await Prescription.aggregate(input).skip(skip).limit(size).sort({ createdAt: -1 });
-    const totalpharmacydetails = (await Prescription.aggregate(input)).length;
+    const pharmacydetails = await Prescription.aggregate(input).allowDiskUse(true).skip(skip).limit(size).sort({ createdAt: -1 });
+    const totalpharmacydetails = (await Prescription.aggregate(input).allowDiskUse(true)).length;
       const totalPages = Math.ceil(totalpharmacydetails / size);
       return { pharmacydetails, totalPages,totalpharmacydetails, size, page};
     }
@@ -93,7 +93,7 @@ import configuration from "../config";
 
   export async function readprescriptionaggregate(input:any) {
     try{
-    return await Prescription.aggregate(input);
+    return await Prescription.aggregate(input).allowDiskUse(true);
     }
     catch(e:any){
       console.log(e);

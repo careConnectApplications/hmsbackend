@@ -39,7 +39,7 @@ function countappointment(query) {
 function modifiedreadallappointment(query, aggregatequery) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            var appointmentdetails = yield appointment_1.default.aggregate(aggregatequery);
+            var appointmentdetails = yield appointment_1.default.aggregate(aggregatequery).allowDiskUse(true);
             const totalappointmentdetails = yield appointment_1.default.find(query).countDocuments();
             return { appointmentdetails, totalappointmentdetails };
         }
@@ -122,8 +122,8 @@ function readallappointmentpaginated(input, page, size) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             const skip = (page - 1) * size;
-            const appointmentdetails = yield appointment_1.default.aggregate(input).skip(skip).limit(size).sort({ createdAt: -1 });
-            const totalappointentdetails = (yield appointment_1.default.aggregate(input)).length;
+            const appointmentdetails = yield appointment_1.default.aggregate(input).allowDiskUse(true).skip(skip).limit(size).sort({ createdAt: -1 });
+            const totalappointentdetails = (yield appointment_1.default.aggregate(input).allowDiskUse(true)).length;
             const totalPages = Math.ceil(totalappointentdetails / size);
             return { appointmentdetails, totalPages, totalappointentdetails, size, page };
         }

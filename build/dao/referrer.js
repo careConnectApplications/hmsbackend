@@ -100,7 +100,7 @@ function updatereferrerbyquery(query, reqbody) {
 function readreferreraggregate(input) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            return yield referrer_1.default.aggregate(input);
+            return yield referrer_1.default.aggregate(input).allowDiskUse(true);
         }
         catch (e) {
             console.log(e);

@@ -103,6 +103,9 @@ const prescriptionSchema = new Schema({
 { timestamps: true }
 );
 
+prescriptionSchema.index({ appointment: 1 });
+prescriptionSchema.index({ patient: 1 });
+
 const prescription= model('Prescription', prescriptionSchema);
 export default prescription;
 

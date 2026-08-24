@@ -84,6 +84,9 @@ const labSchema = new Schema({
 { timestamps: true }
 );
 
+labSchema.index({ appointment: 1 });
+labSchema.index({ patient: 1 });
+
 const lab = model('Lab', labSchema);
 export default lab;
 

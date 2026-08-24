@@ -77,7 +77,7 @@ import configuration from "../config";
 
   export async function readreferreraggregate(input:any) {
     try{
-    return await Referrer.aggregate(input);
+    return await Referrer.aggregate(input).allowDiskUse(true);
     }
     catch(e:any){
       console.log(e);

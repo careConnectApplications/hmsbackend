@@ -88,7 +88,7 @@ export async function countprocedure(query:any) {
 
   export async function readprocedureaggregate(input:any) {
     try{
-    return await Procedure.aggregate(input);
+    return await Procedure.aggregate(input).allowDiskUse(true);
     }
     catch(e:any){
       console.log(e);

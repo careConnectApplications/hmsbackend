@@ -67,9 +67,9 @@ function optimizedreadalllab(aggregatequery, page, size) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             const skip = (page - 1) * size;
-            var labdetails = yield lab_1.default.aggregate(aggregatequery).skip(skip).limit(size).sort({ createdAt: -1 });
+            var labdetails = yield lab_1.default.aggregate(aggregatequery).allowDiskUse(true).skip(skip).limit(size).sort({ createdAt: -1 });
             ;
-            const totallabdetails = (yield lab_1.default.aggregate(aggregatequery)).length;
+            const totallabdetails = (yield lab_1.default.aggregate(aggregatequery).allowDiskUse(true)).length;
             const totalPages = Math.ceil(totallabdetails / size);
             return { labdetails, totalPages, totallabdetails, size, page };
         }
@@ -144,7 +144,7 @@ function updatelabbyquery(query, reqbody) {
 function readlabaggregate(input) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            return yield lab_1.default.aggregate(input);
+            return yield lab_1.default.aggregate(input).allowDiskUse(true);
         }
         catch (e) {
             console.log(e);

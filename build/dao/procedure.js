@@ -113,7 +113,7 @@ function updateprocedurebyquery(query, reqbody) {
 function readprocedureaggregate(input) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            return yield procedure_1.default.aggregate(input);
+            return yield procedure_1.default.aggregate(input).allowDiskUse(true);
         }
         catch (e) {
             console.log(e);

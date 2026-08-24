@@ -115,6 +115,12 @@ const reports = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         else {
             startdate = new Date(startdate);
             enddate = new Date(enddate);
+            enddate.setHours(23, 59, 59, 999);
+            if (startdate > enddate) {
+                const temp = startdate;
+                startdate = enddate;
+                enddate = temp;
+            }
         }
         const financialMatch = (querygroup && querygroup !== "All") ? { paymentcategory: querygroup } : {};
         const reportbyfinancialreport = [
@@ -202,9 +208,6 @@ const reports = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                     sex: "$patient.gender",
                     age: "$patient.age",
                     alldiagnosis: 1,
-                    diagnosis: 1,
-                    clinicalencounter: 1,
-                    encounter: 1,
                     dischargereason: 1,
                     dischargedate: 1,
                     status: 1,
@@ -277,29 +280,40 @@ const reports = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 },
             }
         ];
-        const clinicMatch = (querygroup && querygroup !== "All") ? { clinic: querygroup } : {};
+        const appointmentMatch = { appointmentdate: { $gte: startdate, $lte: enddate } };
+        if (querygroup && querygroup !== "All") {
+            appointmentMatch.clinic = querygroup;
+        }
         const reportbyappointmentreport = [
             {
-                $match: {
-                    $and: [
-                        clinicMatch,
-                        { appointmentdate: { $gte: startdate, $lte: enddate } }
-                    ]
-                }
+                $match: appointmentMatch
             },
             {
                 $sort: { appointmentdate: 1 }
             },
             {
+                $project: {
+                    appointmentdate: 1,
+                    appointmenttype: 1,
+                    clinic: 1,
+                    patient: 1,
+                    reason: 1,
+                    diagnosis: 1,
+                    lab: 1,
+                    prescription: 1,
+                    clinicalencounter: 1,
+                    encounter: 1,
+                    lastName: 1,
+                    firstName: 1,
+                    MRN: 1
+                }
+            },
+            {
                 $lookup: {
                     from: "patientsmanagements",
-                    let: { patientId: "$patient" },
+                    localField: "patient",
+                    foreignField: "_id",
                     pipeline: [
-                        {
-                            $match: {
-                                $expr: { $eq: ["$_id", "$$patientId"] }
-                            }
-                        },
                         {
                             $project: {
                                 _id: 1,
@@ -323,11 +337,16 @@ const reports = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             {
                 $lookup: {
                     from: "labs",
-                    let: { labId: "$lab" },
+                    let: { labId: "$lab", apptId: "$_id" },
                     pipeline: [
                         {
                             $match: {
-                                $expr: { $eq: ["$_id", "$$labId"] }
+                                $expr: {
+                                    $or: [
+                                        { $eq: ["$_id", "$$labId"] },
+                                        { $eq: ["$appointment", "$$apptId"] }
+                                    ]
+                                }
                             }
                         },
                         {
@@ -612,23 +631,9 @@ const reports = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         else if (querytype == reports[2].querytype || querytype == "inpatientregister" || querytype == "inpatient register" || querytype == "admissionreport") {
             const rawAdmissions = yield (0, reports_1.readadmissionaggregate)(reportbyadmissionreport);
             queryresult = rawAdmissions.map((item, index) => {
-                var _a, _b, _c, _d;
-                let diagnosisList = "";
-                if (item.alldiagnosis && Array.isArray(item.alldiagnosis) && item.alldiagnosis.length > 0) {
-                    diagnosisList = item.alldiagnosis.map((d) => d.diagnosis || d.note).filter(Boolean).join(", ");
-                }
-                if (!diagnosisList && ((_a = item.clinicalencounter) === null || _a === void 0 ? void 0 : _a.diagnosisicd10) && Array.isArray(item.clinicalencounter.diagnosisicd10) && item.clinicalencounter.diagnosisicd10.length > 0) {
-                    diagnosisList = item.clinicalencounter.diagnosisicd10.filter(Boolean).join(", ");
-                }
-                if (!diagnosisList && item.diagnosis) {
-                    diagnosisList = item.diagnosis;
-                }
-                if (!diagnosisList && ((_c = (_b = item.encounter) === null || _b === void 0 ? void 0 : _b.assessmentdiagnosis) === null || _c === void 0 ? void 0 : _c.diagosis)) {
-                    diagnosisList = item.encounter.assessmentdiagnosis.diagosis;
-                }
-                if (!diagnosisList && ((_d = item.clinicalencounter) === null || _d === void 0 ? void 0 : _d.diagnosisnote) && Array.isArray(item.clinicalencounter.diagnosisnote) && item.clinicalencounter.diagnosisnote.length > 0) {
-                    diagnosisList = item.clinicalencounter.diagnosisnote.filter(Boolean).join(", ");
-                }
+                const diagnosisList = item.alldiagnosis && Array.isArray(item.alldiagnosis)
+                    ? item.alldiagnosis.map((d) => d.diagnosis || d.note).filter(Boolean).join(", ")
+                    : "";
                 const reason = (item.dischargereason || "").toUpperCase();
                 const dischargeDateStr = item.dischargedate ? item.dischargedate : null;
                 const patientObj = item.patient || {};
@@ -676,7 +681,7 @@ const reports = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                     }
                 }
                 const dateOfDischarge = item.dischargedate || null;
-                return Object.assign(Object.assign({}, item), { patient: patientObj, sn: index + 1, wardName: item.wardName || "Unassigned Ward", dateOfAdmission: item.referddate, dateOfDischarge: dateOfDischarge, dischargedate: dateOfDischarge, patientName: `${patientObj.lastName || item.patientSurname || ''} ${patientObj.firstName || item.patientFirstName || ''}`.trim(), patientNumber: patientObj.MRN || item.patientNumber || "", sex: patientObj.gender || item.sex || "", age: patientObj.age || item.age || "", diagnosis: diagnosisList, labinvestigation: labStr, drugsGiven: drugsGivenStr, admissionOutcome: {
+                return Object.assign(Object.assign({}, item), { patient: patientObj, sn: index + 1, wardName: item.wardName || "Unassigned Ward", dateOfAdmission: item.referddate, dateOfDischarge: dateOfDischarge, patientName: `${patientObj.lastName || item.patientSurname || ''} ${patientObj.firstName || item.patientFirstName || ''}`.trim(), patientNumber: patientObj.MRN || item.patientNumber || "", sex: patientObj.gender || item.sex || "", age: patientObj.age || item.age || "", diagnosis: diagnosisList, labinvestigation: labStr, drugsGiven: drugsGivenStr, admissionOutcome: {
                         abs: reason.includes("ABS") ? dischargeDateStr : null,
                         disch: reason.includes("DISCH") ? dischargeDateStr : null,
                         ref: reason.includes("REF") ? dischargeDateStr : null,
@@ -785,6 +790,12 @@ const cashierreport = (req, res) => __awaiter(void 0, void 0, void 0, function* 
         else {
             startdate = new Date(startdate);
             enddate = new Date(enddate);
+            enddate.setHours(23, 59, 59, 999);
+            if (startdate > enddate) {
+                const temp = startdate;
+                startdate = enddate;
+                enddate = temp;
+            }
         }
         var query = { cashieremail: email, updatedAt: { $gt: startdate, $lt: enddate } };
         var populatequery = 'patient';
@@ -834,6 +845,12 @@ const reportsummary = (req, res) => __awaiter(void 0, void 0, void 0, function* 
         else {
             startdate = new Date(startdate);
             enddate = new Date(enddate);
+            enddate.setHours(23, 59, 59, 999);
+            if (startdate > enddate) {
+                const temp = startdate;
+                startdate = enddate;
+                enddate = temp;
+            }
         }
         let { summary } = yield (0, settings_1.settings)();
         const financialaggregatepaid = [
