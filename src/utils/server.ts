@@ -27,8 +27,8 @@ import theatreadmission from '../routes/theatreadmission';
 import reports from '../routes/reportsandanalytics';
 import { readicdeleven } from '../controllers/icdten/icdten';
 import externalpartner from '../routes/externalpartner';
-
-
+import swaggerUi from 'swagger-ui-express';
+import { externalPartnerSwaggerSpec } from '../docs/externalpartner.swagger';
 
 import { protect } from "../utils/middleware";
 
@@ -78,6 +78,13 @@ function createServer() {
   app.use('/api/v1/readicdten', readicdeleven);
   // External partner integration routes (secured via X-API-Key header)
   app.use('/api/v1/external', externalpartner);
+
+  // Swagger documentation endpoints for external partner integration
+  app.use('/api/v1/external/docs', swaggerUi.serve, swaggerUi.setup(externalPartnerSwaggerSpec));
+  app.get('/api/v1/external/docs-json', (req, res) => {
+    res.setHeader('Content-Type', 'application/json');
+    res.send(externalPartnerSwaggerSpec);
+  });
 
 
 

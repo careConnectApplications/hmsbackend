@@ -1,0 +1,411 @@
+export const externalPartnerSwaggerSpec = {
+  openapi: '3.0.0',
+  info: {
+    title: 'CareConnect HMS - External Partner API Documentation',
+    version: '1.0.0',
+    description:
+      'API specifications for external integration partner services, supporting invoice lookup and payment confirmation.',
+    contact: {
+      name: 'CareConnect Support',
+      email: 'support@careconnect.com',
+    },
+  },
+  servers: [
+    {
+      url: 'https://test.ehealthcareconnect.com/api/v1/external',
+      description: 'Test Server (External Partner Base URL)',
+    },
+    {
+      url: 'https://test.ehealthcareconnect.com/',
+      description: 'Test Server Root',
+    },
+    {
+      url: '/api/v1/external',
+      description: 'Relative External Partner API Base URL',
+    },
+  ],
+  security: [
+    {
+      ApiKeyAuth: [],
+    },
+  ],
+  components: {
+    securitySchemes: {
+      ApiKeyAuth: {
+        type: 'apiKey',
+        in: 'header',
+        name: 'X-API-Key',
+        description:
+          'API Key required for authenticating external partner API requests. Configured via EXTERNAL_PARTNER_API_KEY.',
+      },
+    },
+    schemas: {
+      LineItem: {
+        type: 'object',
+        properties: {
+          id: {
+            type: 'string',
+            example: '64a1b2c3d4e5f67890123456',
+            description: 'Unique line item identifier',
+          },
+          description: {
+            type: 'string',
+            example: 'Lab Test - Full Blood Count',
+            description: 'Payment category / item description',
+          },
+          paymentType: {
+            type: 'string',
+            example: 'Lab',
+            description: 'Type or category of payment item',
+          },
+          amount: {
+            type: 'number',
+            example: 15000,
+            description: 'Amount for this line item in NGN',
+          },
+          quantity: {
+            type: 'number',
+            example: 1,
+            description: 'Quantity of items',
+          },
+          status: {
+            type: 'string',
+            example: 'paid',
+            description: 'Current payment status of the line item',
+          },
+          cashierName: {
+            type: 'string',
+            nullable: true,
+            example: 'External Partner System',
+            description: 'Name of the cashier or system that processed the item',
+          },
+          confirmedAt: {
+            type: 'string',
+            format: 'date-time',
+            nullable: true,
+            example: '2026-08-30T10:00:00.000Z',
+            description: 'Timestamp when payment was confirmed',
+          },
+          createdAt: {
+            type: 'string',
+            format: 'date-time',
+            example: '2026-08-30T09:00:00.000Z',
+          },
+          updatedAt: {
+            type: 'string',
+            format: 'date-time',
+            example: '2026-08-30T10:00:00.000Z',
+          },
+        },
+      },
+      Invoice: {
+        type: 'object',
+        properties: {
+          paymentReference: {
+            type: 'string',
+            example: 'INV-2026-001',
+            description: 'Unique reference number for the payment/invoice',
+          },
+          invoiceNumber: {
+            type: 'string',
+            example: 'INV-2026-001',
+            description: 'Invoice number (same as payment reference)',
+          },
+          customerName: {
+            type: 'string',
+            example: 'John Doe',
+            description: 'Full name of the patient / customer',
+          },
+          MRN: {
+            type: 'string',
+            nullable: true,
+            example: 'MRN-10293',
+            description: 'Medical Record Number',
+          },
+          phoneNumber: {
+            type: 'string',
+            nullable: true,
+            example: '08012345678',
+            description: 'Patient phone number',
+          },
+          gender: {
+            type: 'string',
+            nullable: true,
+            example: 'Male',
+            description: 'Patient gender',
+          },
+          totalAmount: {
+            type: 'number',
+            example: 15000,
+            description: 'Total consolidated invoice amount',
+          },
+          currency: {
+            type: 'string',
+            example: 'NGN',
+            description: 'Currency code',
+          },
+          paymentStatus: {
+            type: 'string',
+            enum: ['PAID', 'INCOMPLETE PAYMENT'],
+            example: 'PAID',
+            description: 'Overall invoice status',
+          },
+          lineItemCount: {
+            type: 'integer',
+            example: 2,
+            description: 'Number of individual line items in the invoice',
+          },
+          lineItems: {
+            type: 'array',
+            items: {
+              $ref: '#/components/schemas/LineItem',
+            },
+          },
+          createdAt: {
+            type: 'string',
+            format: 'date-time',
+            example: '2026-08-30T09:00:00.000Z',
+          },
+          updatedAt: {
+            type: 'string',
+            format: 'date-time',
+            example: '2026-08-30T10:00:00.000Z',
+          },
+        },
+      },
+      ErrorResponse: {
+        type: 'object',
+        properties: {
+          status: {
+            type: 'boolean',
+            example: false,
+          },
+          msg: {
+            type: 'string',
+            example: 'Error description message',
+          },
+          error: {
+            type: 'string',
+            example: 'Detailed error trace (if available)',
+          },
+        },
+      },
+    },
+  },
+  paths: {
+    '/invoices/reference/{paymentReference}': {
+      get: {
+        tags: ['Invoices'],
+        summary: 'Get invoice details by payment reference',
+        description:
+          'Retrieves detailed invoice information including line items, customer details, total amounts, and payment status for a given payment reference.',
+        operationId: 'getInvoiceByPaymentReference',
+        parameters: [
+          {
+            name: 'paymentReference',
+            in: 'path',
+            required: true,
+            description:
+              'The payment reference code for the target invoice. Must contain only alphanumeric characters, hyphens, and underscores.',
+            schema: {
+              type: 'string',
+              example: 'INV-2026-001',
+            },
+          },
+        ],
+        responses: {
+          '200': {
+            description: 'Invoice retrieved successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    status: {
+                      type: 'boolean',
+                      example: true,
+                    },
+                    data: {
+                      $ref: '#/components/schemas/Invoice',
+                    },
+                  },
+                },
+              },
+            },
+          },
+          '401': {
+            description: 'Unauthorized - Missing or invalid X-API-Key header',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ErrorResponse',
+                },
+                example: {
+                  status: false,
+                  msg: 'Unauthorized: Invalid or missing API key.',
+                },
+              },
+            },
+          },
+          '404': {
+            description: 'Invoice not found for the given payment reference',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ErrorResponse',
+                },
+                example: {
+                  status: false,
+                  msg: 'No invoice found for payment reference: INV-2026-001',
+                },
+              },
+            },
+          },
+          '500': {
+            description: 'Internal server error or invalid input formatting',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ErrorResponse',
+                },
+                example: {
+                  status: false,
+                  msg: 'Internal server error while retrieving invoice.',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/invoices/reference/{paymentReference}/pay': {
+      patch: {
+        tags: ['Invoices'],
+        summary: 'Mark invoice as paid',
+        description:
+          'Marks all pending line items for the given payment reference as PAID. This operation is idempotent: if the invoice is already fully paid, it returns success without re-modifying records.',
+        operationId: 'markInvoiceAsPaid',
+        parameters: [
+          {
+            name: 'paymentReference',
+            in: 'path',
+            required: true,
+            description:
+              'The payment reference code for the target invoice. Must contain only alphanumeric characters, hyphens, and underscores.',
+            schema: {
+              type: 'string',
+              example: 'INV-2026-001',
+            },
+          },
+        ],
+        responses: {
+          '200': {
+            description: 'Invoice payment status updated successfully (or already paid)',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    status: {
+                      type: 'boolean',
+                      example: true,
+                    },
+                    msg: {
+                      type: 'string',
+                      example: 'Invoice payment status successfully updated to PAID.',
+                    },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        paymentReference: {
+                          type: 'string',
+                          example: 'INV-2026-001',
+                        },
+                        paymentStatus: {
+                          type: 'string',
+                          example: 'PAID',
+                        },
+                        alreadyPaid: {
+                          type: 'boolean',
+                          example: false,
+                        },
+                        totalAmount: {
+                          type: 'number',
+                          example: 15000,
+                        },
+                        currency: {
+                          type: 'string',
+                          example: 'NGN',
+                        },
+                        lineItemCount: {
+                          type: 'integer',
+                          example: 2,
+                        },
+                        paidAt: {
+                          type: 'string',
+                          format: 'date-time',
+                          example: '2026-08-30T10:05:00.000Z',
+                        },
+                        customerName: {
+                          type: 'string',
+                          example: 'John Doe',
+                        },
+                        MRN: {
+                          type: 'string',
+                          nullable: true,
+                          example: 'MRN-10293',
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          '401': {
+            description: 'Unauthorized - Missing or invalid X-API-Key header',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ErrorResponse',
+                },
+                example: {
+                  status: false,
+                  msg: 'Unauthorized: Invalid or missing API key.',
+                },
+              },
+            },
+          },
+          '404': {
+            description: 'Invoice not found for the given payment reference',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ErrorResponse',
+                },
+                example: {
+                  status: false,
+                  msg: 'No invoice found for payment reference: INV-2026-001',
+                },
+              },
+            },
+          },
+          '500': {
+            description: 'Internal server error',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ErrorResponse',
+                },
+                example: {
+                  status: false,
+                  msg: 'Internal server error while updating payment status.',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  },
+};

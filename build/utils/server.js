@@ -30,6 +30,9 @@ const anc_1 = __importDefault(require("../routes/anc"));
 const theatreadmission_1 = __importDefault(require("../routes/theatreadmission"));
 const reportsandanalytics_1 = __importDefault(require("../routes/reportsandanalytics"));
 const icdten_1 = require("../controllers/icdten/icdten");
+const externalpartner_1 = __importDefault(require("../routes/externalpartner"));
+const swagger_ui_express_1 = __importDefault(require("swagger-ui-express"));
+const externalpartner_swagger_1 = require("../docs/externalpartner.swagger");
 const middleware_1 = require("../utils/middleware");
 function createServer() {
     const app = (0, express_1.default)();
@@ -74,6 +77,14 @@ function createServer() {
     app.use('/api/v1/theatreadmission', middleware_1.protect, theatreadmission_1.default);
     app.use('/api/v1/reports', middleware_1.protect, reportsandanalytics_1.default);
     app.use('/api/v1/readicdten', icdten_1.readicdeleven);
+    // External partner integration routes (secured via X-API-Key header)
+    app.use('/api/v1/external', externalpartner_1.default);
+    // Swagger documentation endpoints for external partner integration
+    app.use('/api/v1/external/docs', swagger_ui_express_1.default.serve, swagger_ui_express_1.default.setup(externalpartner_swagger_1.externalPartnerSwaggerSpec));
+    app.get('/api/v1/external/docs-json', (req, res) => {
+        res.setHeader('Content-Type', 'application/json');
+        res.send(externalpartner_swagger_1.externalPartnerSwaggerSpec);
+    });
     // Handle POST requests to /webhook
     /*
   app.post('/api/v1/webhook', (req, res) => {
