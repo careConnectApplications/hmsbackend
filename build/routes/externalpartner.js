@@ -12,10 +12,13 @@ const router = express_1.default.Router();
  * All routes are secured by the `validateApiKey` middleware.
  * Consumers must supply the correct `X-API-Key` header with every request.
  */
-// GET /api/external/invoices/reference/:paymentReference
+// GET /api/v1/external/invoices/reference/:paymentReference
 // Retrieves invoice details for a given payment reference.
 router.get('/invoices/reference/:paymentReference', apiKeyMiddleware_1.validateApiKey, externalpartner_1.getInvoiceByPaymentReference);
-// PATCH /api/external/invoices/reference/:paymentReference/pay
+// PATCH /api/v1/external/invoices/reference/:paymentReference/pay
 // Marks an invoice (by payment reference) as PAID. Idempotent — safe to retry.
 router.patch('/invoices/reference/:paymentReference/pay', apiKeyMiddleware_1.validateApiKey, externalpartner_1.markInvoiceAsPaid);
+// PATCH /api/v1/external/payments/:id/pay
+// Marks a single payment record as PAID by payment _id. Idempotent — safe to retry.
+router.patch('/payments/:id/pay', apiKeyMiddleware_1.validateApiKey, externalpartner_1.markInvoiceAsPaidById);
 exports.default = router;
