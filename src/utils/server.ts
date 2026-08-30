@@ -26,6 +26,7 @@ import anc from '../routes/anc';
 import theatreadmission from '../routes/theatreadmission';
 import reports  from '../routes/reportsandanalytics';
 import { readicdeleven } from '../controllers/icdten/icdten';
+import externalpartner from '../routes/externalpartner';
 
 
 
@@ -75,6 +76,8 @@ function createServer(){
   app.use('/api/v1/theatreadmission', protect, theatreadmission);
   app.use('/api/v1/reports',protect,  reports);
   app.use('/api/v1/readicdten',  readicdeleven);
+  // External partner integration routes (secured via X-API-Key header)
+  app.use('/api/external', externalpartner);
  
 
   
