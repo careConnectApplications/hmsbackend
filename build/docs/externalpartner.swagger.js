@@ -404,5 +404,82 @@ exports.externalPartnerSwaggerSpec = {
                 },
             },
         },
+        '/payments/{id}/pay': {
+            patch: {
+                tags: ['Payments'],
+                summary: 'Mark single payment as paid by payment _id',
+                description: 'Marks a single payment record as PAID using payment _id. Operation is idempotent.',
+                operationId: 'markPaymentAsPaidById',
+                parameters: [
+                    {
+                        name: 'id',
+                        in: 'path',
+                        required: true,
+                        description: '24-character hexadecimal MongoDB ObjectId of the payment item.',
+                        schema: {
+                            type: 'string',
+                            example: '64a1b2c3d4e5f67890123456',
+                        },
+                    },
+                ],
+                responses: {
+                    '200': {
+                        description: 'Payment status updated to PAID (or already paid)',
+                        content: {
+                            'application/json': {
+                                schema: {
+                                    type: 'object',
+                                    properties: {
+                                        status: { type: 'boolean', example: true },
+                                        msg: {
+                                            type: 'string',
+                                            example: 'Invoice payment status successfully updated to PAID.',
+                                        },
+                                        data: {
+                                            type: 'object',
+                                            properties: {
+                                                id: { type: 'string', example: '64a1b2c3d4e5f67890123456' },
+                                                paymentReference: { type: 'string', example: 'INV-2026-001' },
+                                                paymentStatus: { type: 'string', example: 'PAID' },
+                                                alreadyPaid: { type: 'boolean', example: false },
+                                                amount: { type: 'number', example: 15000 },
+                                                lineItemCount: { type: 'integer', example: 1 },
+                                                paidAt: { type: 'string', format: 'date-time', example: '2026-08-30T10:05:00.000Z' },
+                                                customerName: { type: 'string', example: 'John Doe' },
+                                                MRN: { type: 'string', nullable: true, example: 'MRN-10293' },
+                                            },
+                                        },
+                                    },
+                                },
+                            },
+                        },
+                    },
+                    '401': {
+                        description: 'Unauthorized - Missing or invalid X-API-Key header',
+                        content: {
+                            'application/json': {
+                                schema: { $ref: '#/components/schemas/ErrorResponse' },
+                            },
+                        },
+                    },
+                    '404': {
+                        description: 'Payment record not found for the given ID',
+                        content: {
+                            'application/json': {
+                                schema: { $ref: '#/components/schemas/ErrorResponse' },
+                            },
+                        },
+                    },
+                    '500': {
+                        description: 'Internal server error or invalid ObjectId format',
+                        content: {
+                            'application/json': {
+                                schema: { $ref: '#/components/schemas/ErrorResponse' },
+                            },
+                        },
+                    },
+                },
+            },
+        },
     },
 };

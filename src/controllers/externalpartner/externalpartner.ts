@@ -1,6 +1,25 @@
 import { Request, Response } from 'express';
-import { readonepayment, readallpayment, updatepaymentbyquery } from '../../dao/payment';
+import { readonepayment, readallpayment, updatepaymentbyquery, updatepayment } from '../../dao/payment';
 import configuration from '../../config';
+
+/**
+ * Sanitizes and validates a payment ID (_id) parameter.
+ * - Must be a non-empty 24-character hexadecimal ObjectId string.
+ * Throws if the value is invalid.
+ */
+function sanitizePaymentId(value: any): string {
+  if (!value || typeof value !== 'string' || value.trim() === '') {
+    throw new Error('Payment ID (_id) is required and must be a non-empty string.');
+  }
+
+  const trimmed = value.trim();
+
+  if (!/^[a-fA-F0-9]{24}$/.test(trimmed)) {
+    throw new Error('Payment ID (_id) is invalid. Must be a valid 24-character hexadecimal ObjectId.');
+  }
+
+  return trimmed;
+}
 
 /**
  * Sanitizes and validates a payment reference parameter.
@@ -189,3 +208,78 @@ export async function markInvoiceAsPaid(req: Request, res: Response): Promise<vo
     });
   }
 }
+
+// ---------------------------------------------------------------------------
+// PATCH /api/external/invoices/id/:id/pay
+// Marks a single payment record as PAID by payment _id (idempotent).
+// ---------------------------------------------------------------------------
+export async function markInvoiceAsPaidById(req: Request, res: Response): Promise<void> {
+  try {
+    const id = sanitizePaymentId(req.params.id);
+
+    // Step 1: Find the target payment record by _id
+    const paymentItem: any = await readonepayment({ _id: id });
+
+    if (!paymentItem) {
+      res.status(404).json({
+        status: false,
+        msg: `No payment invoice found for ID: ${id}`,
+      });
+      return;
+    }
+
+    const paidStatus = configuration.status[3]; // "paid"
+
+    // Step 2: Check idempotency — if this payment item is already paid
+    if (paymentItem.status === paidStatus) {
+      res.status(200).json({
+        status: true,
+        msg: 'Payment was already marked as PAID. No changes made.',
+        data: {
+          id: paymentItem._id,
+          paymentReference: paymentItem.paymentreference ?? paymentItem._id,
+          paymentStatus: 'PAID',
+          alreadyPaid: true,
+          amount: paymentItem.amount,
+          updatedAt: paymentItem.updatedAt,
+        },
+      });
+      return;
+    }
+
+    // Step 3: Update only this single payment item to paid
+    const confirmationdate = new Date();
+    const updatePayload = {
+      status: paidStatus,
+      confirmationdate,
+      cashiername: 'External Partner System',
+      cashieremail: 'external-partner@system.api',
+    };
+
+    const updatedPaymentItem: any = await updatepayment(id, updatePayload);
+
+    res.status(200).json({
+      status: true,
+      msg: 'Payment status successfully updated to PAID.',
+      data: {
+        id: updatedPaymentItem._id,
+        paymentReference: updatedPaymentItem.paymentreference ?? updatedPaymentItem._id,
+        paymentStatus: 'PAID',
+        alreadyPaid: false,
+        amount: updatedPaymentItem.amount,
+        paidAt: confirmationdate,
+        customerName:
+          `${updatedPaymentItem.firstName ?? ''} ${updatedPaymentItem.lastName ?? ''}`.trim() || 'N/A',
+        MRN: updatedPaymentItem.MRN ?? null,
+      },
+    });
+  } catch (e: any) {
+    console.error('[externalpartner] markInvoiceAsPaidById error:', e.message);
+    res.status(500).json({
+      status: false,
+      msg: 'Internal server error while updating payment status by ID.',
+      error: e.message,
+    });
+  }
+}
+
