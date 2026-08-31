@@ -72,7 +72,7 @@ function confirmgrouppayment(req, res) {
                 const status = config_1.default.status[3];
                 const { email, staffId, firstName, lastName } = (req.user).user;
                 var cashiername = `${firstName} ${lastName}`;
-                const queryresult = yield (0, payment_1.updatepayment)(_id, { status, cashieremail: email, cashiername, cashierid: staffId });
+                const queryresult = yield (0, payment_1.updatepayment)(_id, { status, cashieremail: email, cashiername, cashierid: staffId, confirmationdate: new Date() });
                 //const {paymentype,paymentcategory,paymentreference} = queryresult;
                 //for patient registration
                 if (paymentcategory == config_1.default.category[3]) {
@@ -432,7 +432,7 @@ function confirmpayment(req, res) {
             //var settings =await  configuration.settings();
             const status = config_1.default.status[3];
             const { email, staffId } = (req.user).user;
-            const queryresult = yield (0, payment_1.updatepayment)(id, { status, cashieremail: email, cashierid: staffId });
+            const queryresult = yield (0, payment_1.updatepayment)(id, { status, cashieremail: email, cashierid: staffId, confirmationdate: new Date() });
             //const queryresult:any =await updatepayment(id,{status});
             //confirm payment of the service paid for 
             const { paymentype, paymentcategory, paymentreference } = queryresult;

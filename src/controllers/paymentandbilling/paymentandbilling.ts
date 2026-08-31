@@ -53,7 +53,7 @@ export async function confirmgrouppayment(req:any, res:any){
     const status= configuration.status[3];
     const {email, staffId, firstName, lastName} = (req.user).user;
     var cashiername = `${firstName} ${lastName}`;
-    const queryresult:any =await updatepayment(_id,{status,cashieremail:email,cashiername,cashierid:staffId});
+    const queryresult:any =await updatepayment(_id,{status,cashieremail:email,cashiername,cashierid:staffId,confirmationdate:new Date()});
     //const {paymentype,paymentcategory,paymentreference} = queryresult;
       //for patient registration
       if(paymentcategory == configuration.category[3]){
@@ -447,7 +447,7 @@ export async function confirmpayment(req:any, res:any){
     //var settings =await  configuration.settings();
      const status= configuration.status[3];
      const {email, staffId} = (req.user).user;
-     const queryresult:any =await updatepayment(id,{status,cashieremail:email,cashierid:staffId});
+     const queryresult:any =await updatepayment(id,{status,cashieremail:email,cashierid:staffId,confirmationdate:new Date()});
       //const queryresult:any =await updatepayment(id,{status});
       //confirm payment of the service paid for 
       const {paymentype,paymentcategory,paymentreference} = queryresult;

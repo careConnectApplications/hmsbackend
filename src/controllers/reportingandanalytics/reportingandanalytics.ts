@@ -5,6 +5,63 @@ import { readallpayment } from "../../dao/payment";
 import { settings } from "../settings/settings";
 import moment from "moment";
 
+function parseDateRange(startdate?: any, enddate?: any, defaultMonthsBack: number = 0) {
+  let sDate: Date;
+  let eDate: Date;
+
+  if (!startdate || !enddate) {
+    const today = new Date();
+    eDate = new Date(Date.UTC(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999));
+    sDate = new Date(Date.UTC(today.getFullYear(), today.getMonth() - defaultMonthsBack, today.getDate(), 0, 0, 0, 0));
+  } else {
+    const sStr = String(startdate).split('T')[0];
+    const eStr = String(enddate).split('T')[0];
+    const [sy, sm, sd] = sStr.split('-').map(Number);
+    const [ey, em, ed] = eStr.split('-').map(Number);
+
+    if (!isNaN(sy) && !isNaN(sm) && !isNaN(sd)) {
+      sDate = new Date(Date.UTC(sy, sm - 1, sd, 0, 0, 0, 0));
+    } else {
+      sDate = new Date(startdate);
+    }
+
+    if (!isNaN(ey) && !isNaN(em) && !isNaN(ed)) {
+      eDate = new Date(Date.UTC(ey, em - 1, ed, 23, 59, 59, 999));
+    } else {
+      eDate = new Date(enddate);
+    }
+  }
+
+  if (isNaN(sDate.getTime())) {
+    sDate = new Date(0);
+  }
+  if (isNaN(eDate.getTime())) {
+    eDate = new Date();
+  }
+
+  if (sDate > eDate) {
+    const temp = sDate;
+    sDate = eDate;
+    eDate = temp;
+  }
+
+  return { startdate: sDate, enddate: eDate };
+}
+
+function getPaymentDateMatch(startdate: Date, enddate: Date) {
+  return {
+    $or: [
+      { confirmationdate: { $gte: startdate, $lte: enddate } },
+      {
+        $and: [
+          { $or: [{ confirmationdate: null }, { confirmationdate: { $exists: false } }] },
+          { createdAt: { $gte: startdate, $lte: enddate } }
+        ]
+      }
+    ]
+  };
+}
+
 function buildGeneralAttendanceTable(appointments: any[]) {
   const counts: Record<string, { male: number; female: number; total: number }> = {
     "0-28d": { male: 0, female: 0, total: 0 },
@@ -101,26 +158,9 @@ export const reports = async (req: any, res: any) => {
       throw new Error(`querygroup ${configuration.error.errorisrequired}`);
     }
 
-    if (!startdate || !enddate) {
-      var todaydate = new Date();
-      enddate = todaydate;
-      startdate = new Date(
-        todaydate.getFullYear(),
-        todaydate.getMonth() - 6,
-        todaydate.getDate()
-      );
-    } else {
-      // Parse as UTC midnight/end-of-day so server timezone has no effect
-      const [sy, sm, sd] = String(startdate).split('-').map(Number);
-      const [ey, em, ed] = String(enddate).split('-').map(Number);
-      startdate = new Date(Date.UTC(sy, sm - 1, sd, 0, 0, 0, 0));
-      enddate   = new Date(Date.UTC(ey, em - 1, ed, 23, 59, 59, 999));
-      if (startdate > enddate) {
-        const temp = startdate;
-        startdate = enddate;
-        enddate = temp;
-      }
-    }
+    const parsedDates = parseDateRange(startdate, enddate, 6);
+    startdate = parsedDates.startdate;
+    enddate = parsedDates.enddate;
 
     const financialMatch = (querygroup && querygroup !== "All") ? { paymentcategory: querygroup } : {};
     const reportbyfinancialreport = [
@@ -128,7 +168,7 @@ export const reports = async (req: any, res: any) => {
         $match: {
           $and: [
             financialMatch,
-            { updatedAt: { $gt: startdate, $lt: enddate } }
+            getPaymentDateMatch(startdate, enddate)
           ]
         }
       },
@@ -882,34 +922,18 @@ export const cashierreport = async (req: any, res: any) => {
     //paymentcategory
     //cashieremail
     var { startdate, enddate, email }: any = req.params;
-    if (!startdate || !enddate) {
-      var todaydate = new Date();
-      enddate = todaydate;
-      startdate = new Date(
-        todaydate.getFullYear(),
-        todaydate.getMonth(),
-        todaydate.getDate()
-      );
-    } else {
-      // Parse as UTC midnight/end-of-day so server timezone has no effect
-      const [sy, sm, sd] = String(startdate).split('-').map(Number);
-      const [ey, em, ed] = String(enddate).split('-').map(Number);
-      startdate = new Date(Date.UTC(sy, sm - 1, sd, 0, 0, 0, 0));
-      enddate   = new Date(Date.UTC(ey, em - 1, ed, 23, 59, 59, 999));
-      if (startdate > enddate) {
-        const temp = startdate;
-        startdate = enddate;
-        enddate = temp;
-      }
-    }
+    const parsedDates = parseDateRange(startdate, enddate, 0);
+    startdate = parsedDates.startdate;
+    enddate = parsedDates.enddate;
 
+    const dateMatch = getPaymentDateMatch(startdate, enddate);
 
-    var query = { cashieremail: email, status: configuration.status[3], updatedAt: { $gte: startdate, $lte: enddate } };
+    var query = { cashieremail: email, status: configuration.status[3], ...dateMatch };
     var populatequery = 'patient';
     const cashieraggregatependingpaid = [
       {
 
-        $match: { $and: [{ status: configuration.status[3] }, { cashieremail: email }, { updatedAt: { $gte: startdate, $lte: enddate } }] }
+        $match: { $and: [{ status: configuration.status[3] }, { cashieremail: email }, dateMatch] }
 
       },
       {
@@ -953,31 +977,16 @@ export const reportsummary = async (req: any, res: any) => {
   try {
     console.log("////////////////////////");
     var { querytype, startdate, enddate }: any = req.params;
-    if (!startdate || !enddate) {
-      var todaydate = new Date();
-      enddate = todaydate;
-      startdate = new Date(
-        todaydate.getFullYear(),
-        todaydate.getMonth(),
-        todaydate.getDate()
-      );
-    } else {
-      // Parse as UTC midnight/end-of-day so server timezone has no effect
-      const [sy, sm, sd] = String(startdate).split('-').map(Number);
-      const [ey, em, ed] = String(enddate).split('-').map(Number);
-      startdate = new Date(Date.UTC(sy, sm - 1, sd, 0, 0, 0, 0));
-      enddate   = new Date(Date.UTC(ey, em - 1, ed, 23, 59, 59, 999));
-      if (startdate > enddate) {
-        const temp = startdate;
-        startdate = enddate;
-        enddate = temp;
-      }
-    }
+    const parsedDates = parseDateRange(startdate, enddate, 0);
+    startdate = parsedDates.startdate;
+    enddate = parsedDates.enddate;
+
+    const dateMatch = getPaymentDateMatch(startdate, enddate);
 
     let { summary }: any = await settings();
     const financialaggregatepaid = [
       {
-        $match: { $and: [{ status: configuration.status[3] }, { updatedAt: { $gte: startdate, $lte: enddate } }] }
+        $match: { $and: [{ status: configuration.status[3] }, dateMatch] }
       },
       {
         $group: {
@@ -1000,7 +1009,7 @@ export const reportsummary = async (req: any, res: any) => {
     const financialaggregategrandtotalpaid = [
       {
 
-        $match: { $and: [{ status: configuration.status[3] }, { updatedAt: { $gte: startdate, $lte: enddate } }] }
+        $match: { $and: [{ status: configuration.status[3] }, dateMatch] }
       },
       {
         $group: {
@@ -1021,7 +1030,7 @@ export const reportsummary = async (req: any, res: any) => {
     const financialaggregatependingpaid = [
       {
 
-        $match: { $and: [{ status: configuration.status[2] }, { updatedAt: { $gte: startdate, $lte: enddate } }] }
+        $match: { $and: [{ status: configuration.status[2] }, dateMatch] }
 
       },
       {
@@ -1045,7 +1054,7 @@ export const reportsummary = async (req: any, res: any) => {
     const cashieraggregatepaid = [
       {
 
-        $match: { $and: [{ status: configuration.status[3] }, { updatedAt: { $gte: startdate, $lte: enddate } }] }
+        $match: { $and: [{ status: configuration.status[3] }, dateMatch] }
 
       },
       /*
@@ -1104,7 +1113,7 @@ export const reportsummary = async (req: any, res: any) => {
     const cashieraggregatepaidgrandtotal = [
       {
 
-        $match: { $and: [{ status: configuration.status[3] }, { updatedAt: { $gte: startdate, $lte: enddate } }] }
+        $match: { $and: [{ status: configuration.status[3] }, dateMatch] }
 
       },
       {
