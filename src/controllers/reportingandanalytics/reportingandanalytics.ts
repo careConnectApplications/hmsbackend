@@ -9,26 +9,36 @@ function parseDateRange(startdate?: any, enddate?: any, defaultMonthsBack: numbe
   let sDate: Date;
   let eDate: Date;
 
-  if (!startdate || !enddate) {
+  if (startdate === 'undefined' || startdate === 'null' || startdate === '') startdate = undefined;
+  if (enddate === 'undefined' || enddate === 'null' || enddate === '') enddate = undefined;
+
+  if (!startdate && !enddate) {
     const today = new Date();
     eDate = new Date(Date.UTC(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999));
     sDate = new Date(Date.UTC(today.getFullYear(), today.getMonth() - defaultMonthsBack, today.getDate(), 0, 0, 0, 0));
   } else {
-    const sStr = String(startdate).split('T')[0];
-    const eStr = String(enddate).split('T')[0];
+    const effStartDate = startdate || enddate;
+    const effEndDate = enddate || startdate;
+
+    const sStr = String(effStartDate).split('T')[0];
+    const eStr = String(effEndDate).split('T')[0];
     const [sy, sm, sd] = sStr.split('-').map(Number);
     const [ey, em, ed] = eStr.split('-').map(Number);
 
     if (!isNaN(sy) && !isNaN(sm) && !isNaN(sd)) {
       sDate = new Date(Date.UTC(sy, sm - 1, sd, 0, 0, 0, 0));
     } else {
-      sDate = new Date(startdate);
+      sDate = new Date(effStartDate);
     }
 
     if (!isNaN(ey) && !isNaN(em) && !isNaN(ed)) {
-      eDate = new Date(Date.UTC(ey, em - 1, ed, 23, 59, 59, 999));
+      if (sStr === eStr) {
+        eDate = new Date(Date.UTC(ey, em - 1, ed, 23, 59, 59, 999));
+      } else {
+        eDate = new Date(Date.UTC(ey, em - 1, ed, 0, 0, 0, 0));
+      }
     } else {
-      eDate = new Date(enddate);
+      eDate = new Date(effEndDate);
     }
   }
 
@@ -154,6 +164,8 @@ export const reports = async (req: any, res: any) => {
     //paymentcategory
     //cashieremail
     var { querygroup, querytype, startdate, enddate }: any = req.params;
+    startdate = startdate || req.query?.startdate;
+    enddate = enddate || req.query?.enddate;
     if (!querygroup) {
       throw new Error(`querygroup ${configuration.error.errorisrequired}`);
     }
@@ -922,6 +934,8 @@ export const cashierreport = async (req: any, res: any) => {
     //paymentcategory
     //cashieremail
     var { startdate, enddate, email }: any = req.params;
+    startdate = startdate || req.query?.startdate;
+    enddate = enddate || req.query?.enddate;
     const parsedDates = parseDateRange(startdate, enddate, 0);
     startdate = parsedDates.startdate;
     enddate = parsedDates.enddate;
@@ -977,6 +991,8 @@ export const reportsummary = async (req: any, res: any) => {
   try {
     console.log("////////////////////////");
     var { querytype, startdate, enddate }: any = req.params;
+    startdate = startdate || req.query?.startdate;
+    enddate = enddate || req.query?.enddate;
     const parsedDates = parseDateRange(startdate, enddate, 0);
     startdate = parsedDates.startdate;
     enddate = parsedDates.enddate;
