@@ -21,27 +21,38 @@ const moment_1 = __importDefault(require("moment"));
 function parseDateRange(startdate, enddate, defaultMonthsBack = 0) {
     let sDate;
     let eDate;
-    if (!startdate || !enddate) {
+    if (startdate === 'undefined' || startdate === 'null' || startdate === '')
+        startdate = undefined;
+    if (enddate === 'undefined' || enddate === 'null' || enddate === '')
+        enddate = undefined;
+    if (!startdate && !enddate) {
         const today = new Date();
         eDate = new Date(Date.UTC(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999));
         sDate = new Date(Date.UTC(today.getFullYear(), today.getMonth() - defaultMonthsBack, today.getDate(), 0, 0, 0, 0));
     }
     else {
-        const sStr = String(startdate).split('T')[0];
-        const eStr = String(enddate).split('T')[0];
+        const effStartDate = startdate || enddate;
+        const effEndDate = enddate || startdate;
+        const sStr = String(effStartDate).split('T')[0];
+        const eStr = String(effEndDate).split('T')[0];
         const [sy, sm, sd] = sStr.split('-').map(Number);
         const [ey, em, ed] = eStr.split('-').map(Number);
         if (!isNaN(sy) && !isNaN(sm) && !isNaN(sd)) {
             sDate = new Date(Date.UTC(sy, sm - 1, sd, 0, 0, 0, 0));
         }
         else {
-            sDate = new Date(startdate);
+            sDate = new Date(effStartDate);
         }
         if (!isNaN(ey) && !isNaN(em) && !isNaN(ed)) {
-            eDate = new Date(Date.UTC(ey, em - 1, ed, 23, 59, 59, 999));
+            if (sStr === eStr) {
+                eDate = new Date(Date.UTC(ey, em - 1, ed, 23, 59, 59, 999));
+            }
+            else {
+                eDate = new Date(Date.UTC(ey, em - 1, ed, 0, 0, 0, 0));
+            }
         }
         else {
-            eDate = new Date(enddate);
+            eDate = new Date(effEndDate);
         }
     }
     if (isNaN(sDate.getTime())) {
@@ -152,10 +163,13 @@ function buildGeneralAttendanceTable(appointments) {
     return table;
 }
 const reports = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b;
     try {
         //paymentcategory
         //cashieremail
         var { querygroup, querytype, startdate, enddate } = req.params;
+        startdate = startdate || ((_a = req.query) === null || _a === void 0 ? void 0 : _a.startdate);
+        enddate = enddate || ((_b = req.query) === null || _b === void 0 ? void 0 : _b.enddate);
         if (!querygroup) {
             throw new Error(`querygroup ${config_1.default.error.errorisrequired}`);
         }
@@ -821,11 +835,14 @@ const reports = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
 exports.reports = reports;
 // cashier reconcillation
 const cashierreport = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b;
     try {
         //find cashier with status
         //paymentcategory
         //cashieremail
         var { startdate, enddate, email } = req.params;
+        startdate = startdate || ((_a = req.query) === null || _a === void 0 ? void 0 : _a.startdate);
+        enddate = enddate || ((_b = req.query) === null || _b === void 0 ? void 0 : _b.enddate);
         const parsedDates = parseDateRange(startdate, enddate, 0);
         startdate = parsedDates.startdate;
         enddate = parsedDates.enddate;
@@ -867,9 +884,12 @@ const cashierreport = (req, res) => __awaiter(void 0, void 0, void 0, function* 
 exports.cashierreport = cashierreport;
 //report summary
 const reportsummary = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b;
     try {
         console.log("////////////////////////");
         var { querytype, startdate, enddate } = req.params;
+        startdate = startdate || ((_a = req.query) === null || _a === void 0 ? void 0 : _a.startdate);
+        enddate = enddate || ((_b = req.query) === null || _b === void 0 ? void 0 : _b.enddate);
         const parsedDates = parseDateRange(startdate, enddate, 0);
         startdate = parsedDates.startdate;
         enddate = parsedDates.enddate;
