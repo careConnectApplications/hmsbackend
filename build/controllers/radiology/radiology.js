@@ -217,7 +217,7 @@ const readAllRadiologyoptimized = (req, res) => __awaiter(void 0, void 0, void 0
                 $unwind: {
                     path: '$patient',
                     preserveNullAndEmptyArrays: true
-                } // Deconstruct the patient array (from the lookup)
+                } // Deconstruct the patient array (from the lookup) 
             },
             {
                 $project: {
@@ -227,6 +227,7 @@ const readAllRadiologyoptimized = (req, res) => __awaiter(void 0, void 0, void 0
                     updatedAt: 1,
                     testid: 1,
                     testresult: 1,
+                    typetestresult: 1,
                     department: 1,
                     raiseby: 1,
                     firstName: "$patient.firstName",
