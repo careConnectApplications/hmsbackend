@@ -27,7 +27,7 @@ export async function countradiology(query:any) {
   
     try{
       const skip = (page - 1) * size;
-     var radiologydetails = await Radiology.aggregate(aggregatequery).allowDiskUse(true).skip(skip).limit(size).sort({ createdAt: -1 });;
+     var radiologydetails = await Radiology.aggregate(aggregatequery).allowDiskUse(true).sort({ createdAt: -1 }).skip(skip).limit(size);
     const totalradiologydetails = (await Radiology.aggregate(aggregatequery).allowDiskUse(true)).length;
     const totalPages = Math.ceil(totalradiologydetails / size);
     return { radiologydetails, totalPages,totalradiologydetails, size, page};

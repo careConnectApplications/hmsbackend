@@ -53,8 +53,7 @@ function optimizedreadallradiology(aggregatequery, page, size) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             const skip = (page - 1) * size;
-            var radiologydetails = yield radiology_1.default.aggregate(aggregatequery).allowDiskUse(true).skip(skip).limit(size).sort({ createdAt: -1 });
-            ;
+            var radiologydetails = yield radiology_1.default.aggregate(aggregatequery).allowDiskUse(true).sort({ createdAt: -1 }).skip(skip).limit(size);
             const totalradiologydetails = (yield radiology_1.default.aggregate(aggregatequery).allowDiskUse(true)).length;
             const totalPages = Math.ceil(totalradiologydetails / size);
             return { radiologydetails, totalPages, totalradiologydetails, size, page };

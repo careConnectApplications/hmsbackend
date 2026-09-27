@@ -137,12 +137,7 @@ function acceptreferrers(req, res) {
 const scheduleappointment = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { id } = req.params;
-        const staffId = (req.user).user.staffId;
         var searchrecord = yield (0, referrer_1.readonereferrer)({ _id: id }, {}, 'preferredconsultant');
-        //verify that login user is the referred consultant
-        if (searchrecord.preferredconsultant.staffId !== staffId) {
-            throw new Error(config_1.default.error.errorreferrer);
-        }
         if (searchrecord.status !== config_1.default.status[12]) {
             //errorservicetray
             throw new Error(config_1.default.error.errorservicetray);

@@ -134,13 +134,7 @@ export async function acceptreferrers(req:any, res:any){
 export const scheduleappointment = async (req:any, res:any) => {
     try {
         const {id} = req.params;
-        const staffId = (req.user).user.staffId;
         var searchrecord:any = await readonereferrer({_id:id},{},'preferredconsultant');
-    //verify that login user is the referred consultant
-    if(searchrecord.preferredconsultant.staffId !== staffId){
-        throw new Error(configuration.error.errorreferrer);
-
-    }
     if(searchrecord.status !== configuration.status[12] )
 {
     //errorservicetray
