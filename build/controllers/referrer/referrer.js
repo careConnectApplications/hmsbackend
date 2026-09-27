@@ -173,6 +173,7 @@ const scheduleappointment = (req, res) => __awaiter(void 0, void 0, void 0, func
             queryresult = yield (0, appointment_1.createappointment)({ appointmentid, payment: createpaymentqueryresult._id, patient: patients._id, clinic: receivingclinic, reason, appointmentdate, appointmentcategory, appointmenttype, vitals: vitals._id, firstName, lastName, MRN, HMOId, HMOName });
             yield (0, patientmanagement_2.updatepatient)(patient, { $push: { payment: createpaymentqueryresult._id, appointment: queryresult._id } });
         }
+        yield (0, referrer_1.updatereferrer)(id, { status: config_1.default.status[5] });
         res.status(200).json({ queryresult, status: true });
     }
     catch (error) {

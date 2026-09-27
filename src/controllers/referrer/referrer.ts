@@ -178,6 +178,8 @@ export const scheduleappointment = async (req:any, res:any) => {
           await updatepatient(patient, { $push: { payment: createpaymentqueryresult._id, appointment: queryresult._id } });
         }
 
+        await updatereferrer(id, { status: configuration.status[5] });
+
         res.status(200).json({queryresult, status: true});
       
     } catch (error:any) {
