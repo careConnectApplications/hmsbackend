@@ -4,6 +4,7 @@ import {validateinputfaulsyvalue} from "../../utils/otherservices";
 import {readoneprice} from "../../dao/price";
 import {createpayment} from "../../dao/payment";
 import {createappointment} from "../../dao/appointment";
+import {createvitalcharts} from "../../dao/vitalcharts";
 import  {updatepatient}  from "../../dao/patientmanagement";
 import  mongoose from 'mongoose';
 const { ObjectId } = mongoose.Types;
@@ -135,39 +136,49 @@ export const scheduleappointment = async (req:any, res:any) => {
     try {
         const {id} = req.params;
         var searchrecord:any = await readonereferrer({_id:id},{},'preferredconsultant');
-    if(searchrecord.status !== configuration.status[12] )
-{
-    //errorservicetray
-    throw new Error(configuration.error.errorservicetray);
-}  
+        if(searchrecord.status !== configuration.status[12] )
+        {
+            //errorservicetray
+            throw new Error(configuration.error.errorservicetray);
+        }  
       
-      //req.body.appointmentdate=new Date(req.body.appointmentdate);
-      var appointmentid:any=String(Date.now());
-      const {patient,receivingclinic} =searchrecord;
-      //const {id} = req.params;
-      var { reason, appointmentdate, appointmentcategory, appointmenttype } = req.body;
-      validateinputfaulsyvalue({ reason, appointmentdate, appointmentcategory, appointmenttype,patient});
-      //search for price if available
-       var patients = await readonepatient({_id:patient,status:configuration.status[1]},{},'','');
-            
-            if(!patients){
-              throw new Error(`Patient donot ${configuration.error.erroralreadyexit} or has not made payment for registration`);
+        var appointmentid:any=String(Date.now());
+        const {patient,receivingclinic} = searchrecord;
+        var { reason, appointmentdate, appointmentcategory, appointmenttype } = req.body;
+        validateinputfaulsyvalue({ reason, appointmentdate, appointmentcategory, appointmenttype, patient});
+
+        var selectquery = {
+          "title": 1, "firstName": 1, "middleName": 1, "lastName": 1, "country": 1, "stateOfResidence": 1, "LGA": 1, "address": 1, "age": 1, "dateOfBirth": 1, "gender": 1, "nin": 1, "phoneNumber": 1, "email": 1, "oldMRN": 1, "nextOfKinName": 1, "nextOfKinRelationship": 1, "nextOfKinPhoneNumber": 1, "nextOfKinAddress": 1,
+          "maritalStatus": 1, "disability": 1, "occupation": 1, "isHMOCover": 1, "HMOName": 1, "HMOId": 1, "HMOPlan": 1, "MRN": 1, "createdAt": 1, "passport": 1
+        };
+
+        var patients: any = await readonepatient({_id:patient, status:configuration.status[1]}, selectquery, '', '');
+        if(!patients){
+          throw new Error(`Patient donot ${configuration.error.erroralreadyexit} or has not made payment for registration`);
+        }
+
+        var { firstName, lastName, MRN, HMOId, HMOName } = patients;
+        var appointmentPrice: any = await readoneprice({servicecategory:appointmentcategory, servicetype:appointmenttype, isHMOCover: configuration.ishmo[0]});
       
-            }
-      var appointmentPrice = await readoneprice({servicecategory:appointmentcategory,servicetype:appointmenttype});
-      
-      if(!appointmentPrice){
-        throw new Error(configuration.error.errornopriceset);
+        if(patients.isHMOCover == configuration.ishmo[0] && !appointmentPrice){
+          throw new Error(configuration.error.errornopriceset);
+        }
   
-    }
-  
-  const createpaymentqueryresult =await createpayment({firstName:patients?.firstName,lastName:patients?.lastName,MRN:patients?.MRN,phoneNumber:patients?.phoneNumber,paymentreference:appointmentid,paymentype:appointmenttype,paymentcategory:appointmentcategory,patient,amount:Number(appointmentPrice.amount)})
-  
-  const queryresult = await createappointment({appointmentid,payment:createpaymentqueryresult._id ,patient,clinic:receivingclinic,reason, appointmentdate, appointmentcategory, appointmenttype,encounter:{vitals: {status:configuration.status[8]}}});
-  console.log(queryresult);    
-  //update patient
-  await updatepatient(patient,{$push: {payment:createpaymentqueryresult._id,appointment:queryresult._id}});
-      res.status(200).json({queryresult, status: true});
+        let createpaymentqueryresult: any;
+        let queryresult;
+        if (patients.isHMOCover == configuration.ishmo[1]) {
+          let vitals = await createvitalcharts({ status: configuration.status[8], patient: patients._id });
+          queryresult = await createappointment({ appointmentid, patient: patients._id, clinic: receivingclinic, reason, appointmentdate, appointmentcategory, appointmenttype, vitals: vitals._id, firstName, lastName, MRN, HMOId, HMOName });
+          await updatepatient(patient, { $push: { appointment: queryresult._id } });
+        }
+        else {
+          createpaymentqueryresult = await createpayment({ firstName: patients?.firstName, lastName: patients?.lastName, MRN: patients?.MRN, phoneNumber: patients?.phoneNumber, paymentreference: appointmentid, paymentype: appointmenttype, paymentcategory: appointmentcategory, patient, amount: Number(appointmentPrice.amount) });
+          let vitals = await createvitalcharts({ status: configuration.status[8], patient: patients._id });
+          queryresult = await createappointment({ appointmentid, payment: createpaymentqueryresult._id, patient: patients._id, clinic: receivingclinic, reason, appointmentdate, appointmentcategory, appointmenttype, vitals: vitals._id, firstName, lastName, MRN, HMOId, HMOName });
+          await updatepatient(patient, { $push: { payment: createpaymentqueryresult._id, appointment: queryresult._id } });
+        }
+
+        res.status(200).json({queryresult, status: true});
       
     } catch (error:any) {
       res.status(403).json({ status: false, msg: error.message });

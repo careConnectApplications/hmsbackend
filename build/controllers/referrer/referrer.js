@@ -21,6 +21,7 @@ const otherservices_1 = require("../../utils/otherservices");
 const price_1 = require("../../dao/price");
 const payment_1 = require("../../dao/payment");
 const appointment_1 = require("../../dao/appointment");
+const vitalcharts_1 = require("../../dao/vitalcharts");
 const patientmanagement_2 = require("../../dao/patientmanagement");
 const mongoose_1 = __importDefault(require("mongoose"));
 const { ObjectId } = mongoose_1.default.Types;
@@ -142,26 +143,36 @@ const scheduleappointment = (req, res) => __awaiter(void 0, void 0, void 0, func
             //errorservicetray
             throw new Error(config_1.default.error.errorservicetray);
         }
-        //req.body.appointmentdate=new Date(req.body.appointmentdate);
         var appointmentid = String(Date.now());
         const { patient, receivingclinic } = searchrecord;
-        //const {id} = req.params;
         var { reason, appointmentdate, appointmentcategory, appointmenttype } = req.body;
         (0, otherservices_1.validateinputfaulsyvalue)({ reason, appointmentdate, appointmentcategory, appointmenttype, patient });
-        //search for price if available
-        var patients = yield (0, patientmanagement_1.readonepatient)({ _id: patient, status: config_1.default.status[1] }, {}, '', '');
+        var selectquery = {
+            "title": 1, "firstName": 1, "middleName": 1, "lastName": 1, "country": 1, "stateOfResidence": 1, "LGA": 1, "address": 1, "age": 1, "dateOfBirth": 1, "gender": 1, "nin": 1, "phoneNumber": 1, "email": 1, "oldMRN": 1, "nextOfKinName": 1, "nextOfKinRelationship": 1, "nextOfKinPhoneNumber": 1, "nextOfKinAddress": 1,
+            "maritalStatus": 1, "disability": 1, "occupation": 1, "isHMOCover": 1, "HMOName": 1, "HMOId": 1, "HMOPlan": 1, "MRN": 1, "createdAt": 1, "passport": 1
+        };
+        var patients = yield (0, patientmanagement_1.readonepatient)({ _id: patient, status: config_1.default.status[1] }, selectquery, '', '');
         if (!patients) {
             throw new Error(`Patient donot ${config_1.default.error.erroralreadyexit} or has not made payment for registration`);
         }
-        var appointmentPrice = yield (0, price_1.readoneprice)({ servicecategory: appointmentcategory, servicetype: appointmenttype });
-        if (!appointmentPrice) {
+        var { firstName, lastName, MRN, HMOId, HMOName } = patients;
+        var appointmentPrice = yield (0, price_1.readoneprice)({ servicecategory: appointmentcategory, servicetype: appointmenttype, isHMOCover: config_1.default.ishmo[0] });
+        if (patients.isHMOCover == config_1.default.ishmo[0] && !appointmentPrice) {
             throw new Error(config_1.default.error.errornopriceset);
         }
-        const createpaymentqueryresult = yield (0, payment_1.createpayment)({ firstName: patients === null || patients === void 0 ? void 0 : patients.firstName, lastName: patients === null || patients === void 0 ? void 0 : patients.lastName, MRN: patients === null || patients === void 0 ? void 0 : patients.MRN, phoneNumber: patients === null || patients === void 0 ? void 0 : patients.phoneNumber, paymentreference: appointmentid, paymentype: appointmenttype, paymentcategory: appointmentcategory, patient, amount: Number(appointmentPrice.amount) });
-        const queryresult = yield (0, appointment_1.createappointment)({ appointmentid, payment: createpaymentqueryresult._id, patient, clinic: receivingclinic, reason, appointmentdate, appointmentcategory, appointmenttype, encounter: { vitals: { status: config_1.default.status[8] } } });
-        console.log(queryresult);
-        //update patient
-        yield (0, patientmanagement_2.updatepatient)(patient, { $push: { payment: createpaymentqueryresult._id, appointment: queryresult._id } });
+        let createpaymentqueryresult;
+        let queryresult;
+        if (patients.isHMOCover == config_1.default.ishmo[1]) {
+            let vitals = yield (0, vitalcharts_1.createvitalcharts)({ status: config_1.default.status[8], patient: patients._id });
+            queryresult = yield (0, appointment_1.createappointment)({ appointmentid, patient: patients._id, clinic: receivingclinic, reason, appointmentdate, appointmentcategory, appointmenttype, vitals: vitals._id, firstName, lastName, MRN, HMOId, HMOName });
+            yield (0, patientmanagement_2.updatepatient)(patient, { $push: { appointment: queryresult._id } });
+        }
+        else {
+            createpaymentqueryresult = yield (0, payment_1.createpayment)({ firstName: patients === null || patients === void 0 ? void 0 : patients.firstName, lastName: patients === null || patients === void 0 ? void 0 : patients.lastName, MRN: patients === null || patients === void 0 ? void 0 : patients.MRN, phoneNumber: patients === null || patients === void 0 ? void 0 : patients.phoneNumber, paymentreference: appointmentid, paymentype: appointmenttype, paymentcategory: appointmentcategory, patient, amount: Number(appointmentPrice.amount) });
+            let vitals = yield (0, vitalcharts_1.createvitalcharts)({ status: config_1.default.status[8], patient: patients._id });
+            queryresult = yield (0, appointment_1.createappointment)({ appointmentid, payment: createpaymentqueryresult._id, patient: patients._id, clinic: receivingclinic, reason, appointmentdate, appointmentcategory, appointmenttype, vitals: vitals._id, firstName, lastName, MRN, HMOId, HMOName });
+            yield (0, patientmanagement_2.updatepatient)(patient, { $push: { payment: createpaymentqueryresult._id, appointment: queryresult._id } });
+        }
         res.status(200).json({ queryresult, status: true });
     }
     catch (error) {
