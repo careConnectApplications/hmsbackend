@@ -26,6 +26,20 @@ import configuration from "../../config";
     }
   };
 
+  //get referrers by clinic
+  export const readAllreferrerByClinic = async (req:any, res:any) => {
+    try {
+      const {clinic} = req.params;
+      const queryresult = await readallreferrer({receivingclinic:clinic},{},'patient','payment');
+      res.status(200).json({
+        queryresult,
+        status:true
+      }); 
+    } catch (error:any) {
+      res.status(403).json({ status: false, msg: error.message });
+    }
+  };
+
  
 export const createreferrers = async (req:any, res:any) => {
     try {
@@ -83,14 +97,8 @@ export async function acceptreferrers(req:any, res:any){
     try{
     //get id
     const {id} = req.params;
-   const staffId = (req.user).user.staffId;
 
     var searchrecord:any = await readonereferrer({_id:id},{},'preferredconsultant');
-    //verify that login user is the referred consultant
-    if(searchrecord.preferredconsultant.staffId !== staffId){
-        throw new Error(configuration.error.errorreferrer);
-
-    }
     if(searchrecord.status !== configuration.status[9] )
 {
     //errorservicetray

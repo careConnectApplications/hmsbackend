@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.scheduleappointment = exports.createreferrers = exports.readAllreferrerByPatient = void 0;
+exports.scheduleappointment = exports.createreferrers = exports.readAllreferrerByClinic = exports.readAllreferrerByPatient = void 0;
 exports.updatereferrers = updatereferrers;
 exports.acceptreferrers = acceptreferrers;
 const referrer_1 = require("../../dao/referrer");
@@ -41,6 +41,21 @@ const readAllreferrerByPatient = (req, res) => __awaiter(void 0, void 0, void 0,
     }
 });
 exports.readAllreferrerByPatient = readAllreferrerByPatient;
+//get referrers by clinic
+const readAllreferrerByClinic = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { clinic } = req.params;
+        const queryresult = yield (0, referrer_1.readallreferrer)({ receivingclinic: clinic }, {}, 'patient', 'payment');
+        res.status(200).json({
+            queryresult,
+            status: true
+        });
+    }
+    catch (error) {
+        res.status(403).json({ status: false, msg: error.message });
+    }
+});
+exports.readAllreferrerByClinic = readAllreferrerByClinic;
 const createreferrers = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { id } = req.params;
@@ -93,12 +108,7 @@ function acceptreferrers(req, res) {
         try {
             //get id
             const { id } = req.params;
-            const staffId = (req.user).user.staffId;
             var searchrecord = yield (0, referrer_1.readonereferrer)({ _id: id }, {}, 'preferredconsultant');
-            //verify that login user is the referred consultant
-            if (searchrecord.preferredconsultant.staffId !== staffId) {
-                throw new Error(config_1.default.error.errorreferrer);
-            }
             if (searchrecord.status !== config_1.default.status[9]) {
                 //errorservicetray
                 throw new Error(config_1.default.error.errorservicetray);
