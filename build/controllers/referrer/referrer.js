@@ -47,7 +47,7 @@ const createreferrers = (req, res) => __awaiter(void 0, void 0, void 0, function
         const { firstName, lastName } = (req.user).user;
         req.body.referredby = `${firstName} ${lastName}`;
         var { diagnosis, referredclinic, referraldate, receivingclinic, preferredconsultant, priority, reasonforreferral, presentingcomplaints, presentingcomplaintsnotes, additionalnotes, salienthistory, findingsonexamination, investigationdoneifany, laboratoryfindings, requiredinputintervention, referredby } = req.body;
-        (0, otherservices_1.validateinputfaulsyvalue)({ diagnosis, referredclinic, referraldate, receivingclinic, preferredconsultant, priority, reasonforreferral, presentingcomplaints, presentingcomplaintsnotes, additionalnotes, salienthistory, findingsonexamination, investigationdoneifany, laboratoryfindings, requiredinputintervention, referredby });
+        (0, otherservices_1.validateinputfaulsyvalue)({ diagnosis, referredclinic, referraldate, receivingclinic, preferredconsultant, priority, reasonforreferral, presentingcomplaints, presentingcomplaintsnotes, additionalnotes, salienthistory, findingsonexamination, laboratoryfindings, requiredinputintervention, referredby });
         //frequency must inlcude
         //route must contain allowed options
         const patientrecord = yield (0, patientmanagement_1.readonepatient)({ _id: id }, {}, '', '');
@@ -73,7 +73,7 @@ function updatereferrers(req, res) {
             const { firstName, lastName } = (req.user).user;
             req.body.referredby = `${firstName} ${lastName}`;
             var { diagnosis, referredclinic, referraldate, preferredconsultant, priority, reasonforreferral, presentingcomplaints, presentingcomplaintsnotes, additionalnotes, salienthistory, findingsonexamination, investigationdoneifany, laboratoryfindings, requiredinputintervention, referredby } = req.body;
-            (0, otherservices_1.validateinputfaulsyvalue)({ diagnosis, referredclinic, referraldate, preferredconsultant, priority, reasonforreferral, presentingcomplaints, presentingcomplaintsnotes, additionalnotes, salienthistory, findingsonexamination, investigationdoneifany, laboratoryfindings, requiredinputintervention, referredby });
+            (0, otherservices_1.validateinputfaulsyvalue)({ diagnosis, referredclinic, referraldate, preferredconsultant, priority, reasonforreferral, presentingcomplaints, presentingcomplaintsnotes, additionalnotes, salienthistory, findingsonexamination, laboratoryfindings, requiredinputintervention, referredby });
             preferredconsultant = new ObjectId(preferredconsultant);
             var queryresult = yield (0, referrer_1.updatereferrer)(id, { diagnosis, referredclinic, referraldate, preferredconsultant, priority, reasonforreferral, presentingcomplaints, presentingcomplaintsnotes, additionalnotes, salienthistory, findingsonexamination, investigationdoneifany, laboratoryfindings, requiredinputintervention, referredby });
             res.status(200).json({
