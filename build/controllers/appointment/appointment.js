@@ -654,9 +654,12 @@ const getAllPaidQueueSchedules = (req, res) => __awaiter(void 0, void 0, void 0,
         // Get today's date
         const startOfDay = new Date();
         startOfDay.setHours(0, 0, 0, 0); // Set the time to 00:00:00
+        // Adjust startOfDay for WAT (UTC+1) timezone offset buffer
+        startOfDay.setTime(startOfDay.getTime() - (2 * 60 * 60 * 1000));
         // Get the start of tomorrow to set the range for "today"
-        const endOfDay = new Date(startOfDay);
+        const endOfDay = new Date();
         endOfDay.setHours(23, 59, 59, 999); // Set the time to 23:59:59  
+        endOfDay.setTime(endOfDay.getTime() + (2 * 60 * 60 * 1000));
         //const {clinic} = (req.user).user;
         const { clinic } = req.params;
         let aggregatequery = [{
