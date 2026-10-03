@@ -20,7 +20,7 @@ import configuration from '../../config';
 export function startBedFeeCronJob() {
   // Runs every day at midnight: "0 0 * * *"
   // For testing, you can change to "* * * * *" (every minute)
-  cron.schedule('0 0 * * *', async () => {
+  cron.schedule('*/5 * * * *', async () => {
     console.log(`[BedFeeCron] Starting bed fee generation at ${new Date().toISOString()}`);
 
     try {
