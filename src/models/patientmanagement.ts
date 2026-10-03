@@ -170,7 +170,11 @@ const patientSchema = new Schema(
           ref: "Payment",
           default: [],
         },
-      ]
+      ],
+      walletBalance: {
+        type: Number,
+        default: 0,
+      }
     
   },
   { timestamps: true }

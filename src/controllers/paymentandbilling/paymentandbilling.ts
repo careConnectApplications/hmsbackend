@@ -1,6 +1,6 @@
-import {readallpayment,readonepayment,updatepayment,updatepaymentbyquery,readallpaymentaggregate,readpaymentaggregate,readpaymentaggregateoptimized} from "../../dao/payment";
+import {createpayment,readallpayment,readonepayment,updatepayment,updatepaymentbyquery,readallpaymentaggregate,readpaymentaggregate,readpaymentaggregateoptimized} from "../../dao/payment";
 import {updateappointmentbyquery} from "../../dao/appointment";
-import {updatepatientbyanyquery,readonepatient} from "../../dao/patientmanagement";
+import {updatepatient,updatepatientbyanyquery,readonepatient} from "../../dao/patientmanagement";
 import {updatelabbyquery} from "../../dao/lab";
 import configuration from "../../config";
 import {validateinputfaulsyvalue} from "../../utils/otherservices";
@@ -39,7 +39,7 @@ export async function confirmgrouppayment(req:any, res:any){
 
       for(var i =0;i < paymentdetails.length; i++ ){
         console.log('paymentdetails',paymentdetails[i])
-        let  {paymentype,paymentcategory,paymentreference,patient,_id}= paymentdetails[i]
+        let  {paymentype,paymentcategory,paymentreference,patient,_id,amount}= paymentdetails[i]
 
         //const {patient} = paymentdetails[i];
       const patientrecord =  await readonepatient({_id:patient,status:configuration.status[1]},{},'','');
@@ -74,6 +74,17 @@ export async function confirmgrouppayment(req:any, res:any){
       else if (paymentcategory == configuration.category[2]){
         //update lab test
         await updatelabbyquery({payment:_id},{status:configuration.status[5]})
+      }
+      else if (paymentcategory == configuration.category[6] || paymentcategory == "Wallet Funding") {
+        await updatepatientbyanyquery({_id:patient},{$inc:{walletBalance: amount}});
+      }
+
+      if (paymentype === "Wallet") {
+        try {
+          await updatepatientbyanyquery({_id:patient, walletBalance: { $gte: amount }}, {$inc:{walletBalance: -amount}});
+        } catch (error) {
+          throw new Error("Insufficient patient wallet balance.");
+        }
       }
       
   }
@@ -450,7 +461,7 @@ export async function confirmpayment(req:any, res:any){
      const queryresult:any =await updatepayment(id,{status,cashieremail:email,cashierid:staffId,confirmationdate:new Date()});
       //const queryresult:any =await updatepayment(id,{status});
       //confirm payment of the service paid for 
-      const {paymentype,paymentcategory,paymentreference} = queryresult;
+      const {paymentype,paymentcategory,paymentreference,amount} = queryresult;
       //for patient registration
       if(paymentcategory == configuration.category[3]){
         //update patient registration status
@@ -473,6 +484,17 @@ export async function confirmpayment(req:any, res:any){
       else if (paymentcategory == configuration.category[2]){
         //update lab test
         await updatelabbyquery({payment:id},{status:configuration.status[5]})
+      }
+      else if (paymentcategory == configuration.category[6] || paymentcategory == "Wallet Funding") {
+        await updatepatientbyanyquery({_id:patient},{$inc:{walletBalance: amount}});
+      }
+
+      if (paymentype === "Wallet") {
+        try {
+          await updatepatientbyanyquery({_id:patient, walletBalance: { $gte: amount }}, {$inc:{walletBalance: -amount}});
+        } catch (error) {
+          throw new Error("Insufficient patient wallet balance.");
+        }
       }
       //update for pharmacy
       
@@ -544,3 +566,58 @@ export async function printreceipt(req:any, res:any){
 }
 
 
+export async function fundpatientwallet(req: any, res: any) {
+  try {
+    const { patientId, amount, paymentype } = req.body;
+    validateinputfaulsyvalue({ patientId, amount, paymentype });
+
+    const patient = await readonepatient({ _id: patientId, status: configuration.status[1] }, {}, '', '');
+    if (!patient) {
+      throw new Error("Patient record not found or inactive.");
+    }
+
+    const paymentreference = `WAL-${Math.floor(1000000000 + Math.random() * 900000000)}`;
+
+    const createpaymentqueryresult = await createpayment({
+      firstName: patient.firstName,
+      lastName: patient.lastName,
+      MRN: patient.MRN,
+      phoneNumber: patient.phoneNumber,
+      paymentreference,
+      paymentype,
+      paymentcategory: configuration.category[6] || "Wallet Funding",
+      patient: patient._id,
+      amount: Number(amount),
+      status: configuration.status[2],
+    });
+
+    await updatepatient(patient._id, { $push: { payment: createpaymentqueryresult._id } });
+
+    res.status(200).json({
+      queryresult: createpaymentqueryresult,
+      status: true,
+      msg: "Wallet funding request created successfully.",
+    });
+  } catch (e: any) {
+    console.log(e);
+    res.status(403).json({ status: false, msg: e.message });
+  }
+}
+
+export async function getpatientwalletbalance(req: any, res: any) {
+  try {
+    const { patientId } = req.params;
+    const patient:any = await readonepatient({ _id: patientId }, { walletBalance: 1, firstName: 1, lastName: 1, MRN: 1 }, '', '');
+    if (!patient) {
+      throw new Error("Patient not found.");
+    }
+    res.status(200).json({
+      walletBalance: patient.walletBalance || 0,
+      patient,
+      status: true,
+    });
+  } catch (e: any) {
+    console.log(e);
+    res.status(403).json({ status: false, msg: e.message });
+  }
+}
