@@ -29,6 +29,7 @@ import { readicdeleven } from '../controllers/icdten/icdten';
 import externalpartner from '../routes/externalpartner';
 import swaggerUi from 'swagger-ui-express';
 import { externalPartnerSwaggerSpec } from '../docs/externalpartner.swagger';
+import { startBedFeeCronJob } from '../controllers/paymentandbilling/bedfeecron';
 
 import { protect } from "../utils/middleware";
 
@@ -107,6 +108,9 @@ app.post('/api/v1/webhook', (req, res) => {
   res.status(200).send('Event received');
 });
 */
+
+  // Start scheduled cron jobs
+  startBedFeeCronJob();
 
   return app;
 

@@ -68,6 +68,14 @@ const paymentSchema = new Schema(
       required: true,
       type: String,
       default: configuration.status[2],
+    },
+    useWallet:{
+      type: Boolean,
+      default: false,
+    },
+    walletBalanceAfterPayment:{
+      type: Number,
+      default: null,
     }
     
   },

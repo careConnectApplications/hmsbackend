@@ -60,7 +60,7 @@ const configuration: any = {
   servedstatus: ["served", "unserved"],
   clinictype: ["department", "clinic", "pharmacy", "radiology", "procedure"],
   defaultPassword: "HMSB",
-  category: ["Appointment", "Pharmacy", "Lab", "Patient Registration", "Radiology", "Procedure", "Wallet Funding"],
+  category: ["Appointment", "Pharmacy", "Lab", "Patient Registration", "Radiology", "Procedure", "Wallet Funding", "Bed Fee"],
   ishmo: ["No", "Yes"],
   settings: async function () {
     const { clinicdetails } = await readallclinics({}, { "clinic": 1, "id": 1, "_id": 0 });
@@ -174,7 +174,8 @@ const configuration: any = {
         insulinroute: ["SC", "IV", "IM"],
         insulinsymptoms: ["Sweating", "Dizziness", "Confusion"],
         insulininterventionprovided: ["Oral", "Glucose", "IV"],
-        admissionstatus: ["admited", "totransfer", "transfered", "todischarge", "discharged"],
+         admissionstatus: ["toadmit", "admited", "totransfer", "transfered", "todischarge", "discharged"],
+        //admissionstatus: ["admited", "totransfer", "transfered", "todischarge", "discharged"],
         medicationchartfrequency: ["Start", "Daily", "BD", "TDS", "QDS", "PRM", "NOCTE", "4 Hours", "8 Hours", "12 Hours"],
         medicationchartroute: ["oral", "caudal block", "continuous epidural", "continuous intra-arterial infusion", "continuous IV infusion", "continuous nebulization", "continuous subcutaneous infusion", "continuous intrathecal infusion", "cervical", "dental", "epidural", "otic (ear)", "endotracheal", "feeding tube", "G-tube",
           "hand bulb nebulizer", "intra-articular", "intrabursal", "intra-cavernosal", "intradermal", "Infiltration", "irrigation", "inhalation", "Intracardiac", "intrapleural", "IM"],
