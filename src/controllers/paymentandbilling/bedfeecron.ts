@@ -20,13 +20,13 @@ import configuration from '../../config';
 export function startBedFeeCronJob() {
   // Runs every day at midnight: "0 0 * * *"
   // For testing, you can change to "* * * * *" (every minute)
-  cron.schedule('0 0 * * *', async () => {
+  cron.schedule('*/5 * * * *', async () => {
     console.log(`[BedFeeCron] Starting bed fee generation at ${new Date().toISOString()}`);
 
     try {
       // 1. Find all currently admitted patients (status = "admited")
       const { admissiondetails }: any = await readalladmission(
-        { status: configuration.admissionstatus[1] }, // "admited"
+        { status: { $nin: [configuration.admissionstatus[0], configuration.admissionstatus[5]] } }, // Not "toadmit" or "discharged"
         {},
         'patient',
         ''
