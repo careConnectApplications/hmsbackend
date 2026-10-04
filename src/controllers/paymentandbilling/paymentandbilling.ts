@@ -718,15 +718,16 @@ export async function refundpatientwallet(req: any, res: any) {
 export async function approverefundpatientwallet(req: any, res: any) {
   try {
     const { refundId } = req.params;
-    validateinputfaulsyvalue({ refundId });
+    const { action } = req.body; // expected: "approve" or "reject"
+    validateinputfaulsyvalue({ refundId, action });
 
     const refundRequest: any = await readonerefund({ _id: refundId });
     if (!refundRequest) {
       throw new Error("Refund request not found.");
     }
 
-    if (refundRequest.status === "Approved") {
-      throw new Error("Refund request is already approved.");
+    if (refundRequest.status === "Approved" || refundRequest.status === "Rejected") {
+      throw new Error(`Refund request is already ${refundRequest.status}.`);
     }
 
     const patient: any = await readonepatient({ _id: refundRequest.patient, status: configuration.status[1] }, {}, '', '');
@@ -734,25 +735,33 @@ export async function approverefundpatientwallet(req: any, res: any) {
       throw new Error("Patient not found or inactive.");
     }
 
-    if (patient.walletBalance < refundRequest.amount) {
-       throw new Error("Insufficient wallet balance to approve refund.");
+    const { staffId } = req.user?.user || {};
+    let newStatus = "";
+
+    if (action.toLowerCase() === "approve") {
+      if (patient.walletBalance < refundRequest.amount) {
+         throw new Error("Insufficient wallet balance to approve refund.");
+      }
+
+      // Deduct amount from patient wallet
+      await updatepatientbyanyquery({ _id: patient._id }, { $inc: { walletBalance: -Number(refundRequest.amount) } });
+      newStatus = "Approved";
+    } else if (action.toLowerCase() === "reject") {
+      newStatus = "Rejected";
+    } else {
+      throw new Error("Invalid action. Must be 'approve' or 'reject'.");
     }
 
-    const { staffId } = req.user?.user || {};
-
-    // Deduct amount from patient wallet
-    await updatepatientbyanyquery({ _id: patient._id }, { $inc: { walletBalance: -Number(refundRequest.amount) } });
-
-    // Update the refund status to Approved
+    // Update the refund status
     const updatedRefund = await updaterefund(refundId, {
-      status: "Approved",
-      refundedBy: staffId, // Update with the staff approving it
+      status: newStatus,
+      refundedBy: staffId, // Update with the staff processing it
     });
 
     res.status(200).json({
       queryresult: updatedRefund,
       status: true,
-      msg: "Wallet refund approved successfully.",
+      msg: `Wallet refund ${newStatus.toLowerCase()} successfully.`,
     });
   } catch (e: any) {
     console.log(e);
