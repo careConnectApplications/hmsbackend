@@ -1,6 +1,7 @@
 import { createpayment, readallpayment, readonepayment, updatepayment, updatepaymentbyquery, readallpaymentaggregate, readpaymentaggregate, readpaymentaggregateoptimized } from "../../dao/payment";
 import { updateappointmentbyquery } from "../../dao/appointment";
 import { updatepatient, updatepatientbyanyquery, readonepatient } from "../../dao/patientmanagement";
+import { createrefund, readonerefund, updaterefund, readallrefund } from "../../dao/refund";
 import { updatelabbyquery } from "../../dao/lab";
 import configuration from "../../config";
 import { validateinputfaulsyvalue } from "../../utils/otherservices";
@@ -657,3 +658,140 @@ export async function getpatientbedfeepayments(req: any, res: any) {
     res.status(403).json({ status: false, msg: e.message });
   }
 }
+
+export async function getpatientwallettransactions(req: any, res: any) {
+  try {
+    const { patientId } = req.params;
+    var query = {
+      patient: patientId,
+      $or: [
+        { useWallet: true },
+        { paymentcategory: configuration.category[6] },
+        { paymentcategory: "Wallet Funding" }
+      ]
+    };
+    var populatequery = 'patient';
+    const queryresult = await readallpayment(query, populatequery);
+
+    res.json({
+      queryresult,
+      status: true,
+    });
+  } catch (e: any) {
+    console.log(e);
+    res.status(403).json({ status: false, msg: e.message });
+  }
+}
+
+export async function refundpatientwallet(req: any, res: any) {
+  try {
+    const { _id, amount, reason } = req.body;
+    validateinputfaulsyvalue({ _id, amount });
+
+    const patient: any = await readonepatient({ _id, status: configuration.status[1] }, {}, '', '');
+    if (!patient) {
+      throw new Error("Patient not found or inactive.");
+    }
+    
+    const { staffId } = req.user?.user || {};
+
+    // Log the refund as a request
+    const refundRecord = await createrefund({
+      patient: patient._id,
+      amount: Number(amount),
+      reason,
+      refundedBy: staffId,
+      status: "Pending", // This is just a request now
+    });
+
+    res.status(200).json({
+      queryresult: refundRecord,
+      status: true,
+      msg: "Wallet refund requested successfully.",
+    });
+  } catch (e: any) {
+    console.log(e);
+    res.status(403).json({ status: false, msg: e.message });
+  }
+}
+
+export async function approverefundpatientwallet(req: any, res: any) {
+  try {
+    const { refundId } = req.params;
+    validateinputfaulsyvalue({ refundId });
+
+    const refundRequest: any = await readonerefund({ _id: refundId });
+    if (!refundRequest) {
+      throw new Error("Refund request not found.");
+    }
+
+    if (refundRequest.status === "Approved") {
+      throw new Error("Refund request is already approved.");
+    }
+
+    const patient: any = await readonepatient({ _id: refundRequest.patient, status: configuration.status[1] }, {}, '', '');
+    if (!patient) {
+      throw new Error("Patient not found or inactive.");
+    }
+
+    if (patient.walletBalance < refundRequest.amount) {
+       throw new Error("Insufficient wallet balance to approve refund.");
+    }
+
+    const { staffId } = req.user?.user || {};
+
+    // Deduct amount from patient wallet
+    await updatepatientbyanyquery({ _id: patient._id }, { $inc: { walletBalance: -Number(refundRequest.amount) } });
+
+    // Update the refund status to Approved
+    const updatedRefund = await updaterefund(refundId, {
+      status: "Approved",
+      refundedBy: staffId, // Update with the staff approving it
+    });
+
+    res.status(200).json({
+      queryresult: updatedRefund,
+      status: true,
+      msg: "Wallet refund approved successfully.",
+    });
+  } catch (e: any) {
+    console.log(e);
+    res.status(403).json({ status: false, msg: e.message });
+  }
+}
+
+export async function getallrefunds(req: any, res: any) {
+  try {
+    const { status, startDate, endDate } = req.query;
+    
+    let query: any = {};
+    if (status) {
+      query.status = status;
+    }
+    
+    if (startDate || endDate) {
+      query.createdAt = {};
+      if (startDate) {
+        query.createdAt.$gte = new Date(startDate);
+      }
+      if (endDate) {
+        // Set to end of day if only endDate is provided, or same string date
+        const eDate = new Date(endDate);
+        eDate.setUTCHours(23, 59, 59, 999);
+        query.createdAt.$lte = eDate;
+      }
+    }
+    
+    const populatequery = 'patient'; // Populate patient details
+    const queryresult = await readallrefund(query, populatequery);
+
+    res.status(200).json({
+      queryresult,
+      status: true,
+    });
+  } catch (e: any) {
+    console.log(e);
+    res.status(403).json({ status: false, msg: e.message });
+  }
+}
+

@@ -1097,6 +1097,16 @@ export const reportsummary = async (req: any, res: any) => {
         $group: {
           _id: "$cashieremail",                // Group by product
           totalAmount: { $sum: "$amount" },
+          totalWalletAmount: {
+            $sum: {
+              $cond: [{ $eq: ["$useWallet", true] }, "$amount", 0]
+            }
+          },
+          totalNonWalletAmount: {
+            $sum: {
+              $cond: [{ $ne: ["$useWallet", true] }, "$amount", 0]
+            }
+          },
           cashierid: { $first: "$cashierid" },
           tempcashiername: {
             $push: {
@@ -1117,6 +1127,8 @@ export const reportsummary = async (req: any, res: any) => {
           cashieremail: "$_id",
           cashiername: 1,
           totalAmount: 1,
+          totalWalletAmount: 1,
+          totalNonWalletAmount: 1,
           cashierid: 1,
           status: configuration.status[3],
           _id: 0
@@ -1135,12 +1147,24 @@ export const reportsummary = async (req: any, res: any) => {
       {
         $group: {
           _id: null,                // Group by product
-          grandtotalAmount: { $sum: "$amount" }
+          grandtotalAmount: { $sum: "$amount" },
+          grandTotalWalletAmount: {
+            $sum: {
+              $cond: [{ $eq: ["$useWallet", true] }, "$amount", 0]
+            }
+          },
+          grandTotalNonWalletAmount: {
+            $sum: {
+              $cond: [{ $ne: ["$useWallet", true] }, "$amount", 0]
+            }
+          }
         }
       },
       {
         $project: {
           grandtotalAmount: 1,
+          grandTotalWalletAmount: 1,
+          grandTotalNonWalletAmount: 1,
           _id: 0
 
         }
